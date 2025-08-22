@@ -16,17 +16,30 @@ model User {
   firstname String?
   lastname  String?
   password  String?
-  friends   User[]    @relation("UsersFriends")
+  isOnline  Boolean  @default(false)
   updatedAt DateTime  @updatedAt
   createdAt DateTime  @default(now())
   messages  Message[]
 
-  chats Chat[]
-
-  users  User[]  @relation("UsersFriends")
-  Profil Profil?
+  chats    Chat[]
+  Profil   Profil?
+  friends  UserFriend[] @relation("UserFriends")
+  friendOf UserFriend[] @relation("UserFriendOf")
 
   UserChat UserChat[]
+}
+
+model UserFriend {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  accepted  Boolean  @default(false)
+  user      User     @relation("UserFriends", fields: [userId], references: [id])
+  friend    User     @relation("UserFriendOf", fields: [friendId], references: [id])
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
 }
 
 model Profil {
@@ -76,7 +89,6 @@ model Chat {
 
   UserChat UserChat[]
 }
-
 
 model UserChat {
   id        Int      @id @default(autoincrement())

@@ -1,5 +1,5 @@
 import { Attachment, Profil, User } from "@/generated/prisma";
-import { Request } from "express";
+import e, { Request } from "express";
 import { v4 } from "uuid";
 import {
   ChatDetail,
@@ -8,8 +8,11 @@ import {
   LoginDetailDto,
   MessageDetail,
   MessageDetailDto,
+  UserDetail,
+  UserDetailDto,
   UserFriendDetail,
   UserFriendDetailDto,
+  UserFriendOfDetail,
 } from "./types";
 import { genSaltSync, hashSync } from "bcrypt";
 import { email } from "zod";
@@ -29,9 +32,15 @@ const convertFileToProfile = (
   };
 };
 
-const setPassword = (user: Partial<User>): Partial<User> => {
+const setPassword = (user: Partial<User>, newPassword?: string): Partial<User> => {
   const salt = genSaltSync(10);
-  if (user.password) {
+  if (newPassword) {
+    user.password = hashSync(newPassword, salt);
+  }
+  else if (!user.password) {
+    user.password = hashSync("defaultPassword", salt);
+  }
+  else{
     user.password = hashSync(user.password, salt);
   }
   return user;
@@ -125,6 +134,24 @@ const convertMessageDetailToMessageDetailDto = (
   };
 };
 
+const convertUserFriendOfDetailToUserFriendDetailDto = (
+  protocol: string,
+  host: string,
+  userFriendDetail?: UserFriendOfDetail | null
+): UserFriendDetailDto => {
+  if (!userFriendDetail) {
+    return [];
+  }
+
+  return userFriendDetail.friendOf.map((friend) => ({
+    id: friend.id,
+    username: friend.user.username,
+    avatar: friend.user.Profil?.id
+      ? `${protocol}://${host}/api/avatars/${friend.user.Profil.id}`
+      : getAvatar(friend.user.email || "guest@gmail.com"),
+  }));
+};
+
 const convertUserFriendDetailToUserFriendDetailDto = (
   protocol: string,
   host: string,
@@ -136,34 +163,11 @@ const convertUserFriendDetailToUserFriendDetailDto = (
 
   return userFriendDetail.friends.map((friend) => ({
     id: friend.id,
-    username: friend.username,
-    avatar: friend.Profil?.id
-      ? `${protocol}://${host}/api/avatars/${friend.Profil.id}`
-      : getAvatar(friend.email || "guest@gmail.com"),
+    username: friend.user.username,
+    avatar: friend.user.Profil?.id
+      ? `${protocol}://${host}/api/avatars/${friend.user.Profil.id}`
+      : getAvatar(friend.user.email || "guest@gmail.com"),
   }));
-};
-
-const convertLoginDetailToLoginDetailDto = (
-  protocol: string,
-  host: string,
-  login: LoginDetail
-): LoginDetailDto | null => {
-  if (!login) {
-    return null;
-  }
-
-  return {
-    id: login.id,
-    email: login.email,
-    phone: login.phone,
-    firstname: login.firstname,
-    lastname: login.lastname,
-    updatedAt: login.updatedAt,
-    createdAt: login.createdAt,
-    avatar: login.Profil?.id
-      ? `${protocol}://${host}/api/avatars/${login.Profil.id}`
-      : getAvatar(login.email || "guest@gmail.com"),
-  };
 };
 
 const  getAvatar=(email:string)=>{
@@ -176,6 +180,25 @@ const  getAvatar=(email:string)=>{
   }
 }
 
+const convertUserDetailToUserDetailDto=(protocol: string, host: string, user: UserDetail): UserDetailDto | null => {
+  if (!user) {
+    return null;
+  }
+  return {
+    avatar: user.Profil?.id
+      ? `${protocol}://${host}/api/avatars/${user.Profil.id}`
+      : getAvatar(user.email || "guest@gmail.com"),
+    id: user.id,
+    email: user.email,
+    phone: user.phone,
+    isOnline: user.isOnline,
+    username: user.username,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    updatedAt: user.updatedAt,
+    createdAt: user.createdAt,
+  };
+};
 
 export {
   convertFileToProfile,
@@ -184,5 +207,6 @@ export {
   convertMessageDetailToMessageDetailDto,
   setPassword,
   convertUserFriendDetailToUserFriendDetailDto,
-  convertLoginDetailToLoginDetailDto,
+  convertUserFriendOfDetailToUserFriendDetailDto,
+  convertUserDetailToUserDetailDto
 };

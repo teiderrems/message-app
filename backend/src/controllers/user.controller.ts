@@ -1,5 +1,5 @@
 import UserService from "@/services/user.service";
-import { convertFileToProfile } from "@/util";
+import { convertFileToProfile, convertUserFriendDetailToUserFriendDetailDto, convertUserFriendOfDetailToUserFriendDetailDto } from "@/util";
 import { Request, Response } from "express";
 
 export default class UserController {
@@ -38,6 +38,54 @@ export default class UserController {
     }
   }
 
+
+  static async getUserFriends(req: Request, res: Response) {
+    try {
+      const friends = await UserService.getUserFriends(Number(req.params.id));
+      return res.status(200).json(convertUserFriendOfDetailToUserFriendDetailDto(req.protocol!,`${req.protocol}://${req.get('host')}`, friends));
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getUserFriendRequests(req: Request, res: Response) {
+    try {
+      const friendRequests = await UserService.getUserFriendRequests(Number(req.params.id));
+      return res.status(200).json(convertUserFriendOfDetailToUserFriendDetailDto(req.protocol!,`${req.protocol}://${req.get('host')}`, friendRequests));
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getUserSentFriendRequests(req: Request, res: Response) {
+    try {
+      const sentRequests = await UserService.getFriendRequests(Number(req.params.id));
+      return res.status(200).json(convertUserFriendDetailToUserFriendDetailDto(req.protocol!,`${req.protocol}://${req.get('host')}`, sentRequests));
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async changeOnlineStatus(req: Request, res: Response) {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+    try {
+      const { isOnline } = req.body;
+      const updated = await UserService.changeOnlineStatus({
+        id: Number(id),
+        isOnline,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      return res.status(200).json({ message: "User online status updated successfully" });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
   static async updateUser(req: Request, res: Response) {
     try {
       const updated = await UserService.updateUser({
@@ -53,16 +101,62 @@ export default class UserController {
     }
   }
 
-  static async updateUserFriends(req: Request, res: Response) {
+  static async sendFriendRequest(req: Request, res: Response) {
     try {
-      const updated = await UserService.updateUserFriends({
-        id: Number(req.params.id),
-        friends: req.body.friends,
+      const updated = await UserService.sendFriendRequest({
+        userId: Number(req.params.id),
+        friendId: req.body.friendId,
       });
       if (!updated) {
         return res.status(404).json({ error: "User not found" });
       }
-      return res.status(200).json({ message: "User friends updated successfully" });
+      return res.status(200).json({ message: "Friend request sent successfully" });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async acceptFriendRequest(req: Request, res: Response) {
+    try {
+      const updated = await UserService.acceptFriendRequest({
+        userId: Number(req.params.id),
+        friendId: req.body.friendId,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      return res.status(200).json({ message: "Friend request accepted successfully" });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async declineFriendRequest(req: Request, res: Response) {
+    try {
+      const updated = await UserService.declineFriendRequest({
+        userId: Number(req.params.id),
+        friendId: req.body.friendId,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      return res.status(200).json({ message: "Friend request declined successfully" });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+
+  static async deleteFriend(req: Request, res: Response) {
+    try {
+      const updated = await UserService.removeFriend({
+        userId: Number(req.params.id),
+        friendId: req.body.friendId,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      return res.status(200).json({ message: "Friend deleted successfully" });
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

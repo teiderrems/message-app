@@ -3,19 +3,23 @@ import { type Chat, Prisma } from "@/generated/prisma";
 
 export default class ChatService {
   static async getChatsByUserId(id: number) {
-      try {
-        return await prisma.chat.findMany({
-          where: { authorId: id },
-        });
-      } catch (error) {
-        console.error(error);
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new Error(error.message);
-        }
-        throw error;
+    try {
+      return await prisma.chat.findMany({
+        where: { 
+          OR:[
+            { authorId: id },
+            { UserChat: { some: { userId: id } } }
+          ]
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
       }
+      throw error;
+    }
   }
-
 
   static async getChatById(id: number) {
     try {
@@ -102,7 +106,7 @@ export default class ChatService {
     }
   }
 
-  static async addchat({ chat }: { chat: Partial<Chat> }) {
+  static async addChat({ chat }: { chat: Partial<Chat> }) {
     try {
       return await prisma.chat.create({
         data: {
@@ -126,13 +130,7 @@ export default class ChatService {
     }
   }
 
-  static async updateChat({
-    id,
-    chat,
-  }: {
-    chat: Partial<Chat>;
-    id: number;
-  }) {
+  static async updateChat({ id, chat }: { chat: Partial<Chat>; id: number }) {
     try {
       return await prisma.chat.update({
         where: { id },
@@ -206,19 +204,21 @@ export default class ChatService {
     userId,
     chatId,
   }: {
-    userId: number;
+    userId: number[];
     chatId: number;
   }) {
     try {
-      await prisma.userChat.create({
-        data: {
+      await prisma.userChat.createMany({
+        data: userId.map((id) => ({
           user: {
-            connect: { id: userId },
+            connect: { id },
           },
           chat: {
             connect: { id: chatId },
           },
-        },
+          userId: id,
+          chatId: chatId,
+        })),
       });
     } catch (error) {
       console.error(error);

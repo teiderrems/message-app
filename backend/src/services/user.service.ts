@@ -7,16 +7,28 @@ export default class UserService {
   static async getUserFriends(userId: number) {
     try {
       return await prisma.user.findUnique({
-        where: { id: userId },
+        where: {
+          id: userId,
+          friendOf: {
+            some: {
+              accepted: true,
+            },
+          },
+        },
         select: {
-          friends: {
+          friendOf: {
             select: {
               id: true,
-              username: true,
-              email: true,
-              Profil: {
+              user: {
                 select: {
                   id: true,
+                  username: true,
+                  email: true,
+                  Profil: {
+                    select: {
+                      id: true,
+                    },
+                  },
                 },
               },
             },
@@ -32,13 +44,212 @@ export default class UserService {
     }
   }
 
+  static async getUserFriendRequests(userId: number) {
+    try {
+      return await prisma.user.findUnique({
+        where: {
+          id: userId,
+          friendOf: {
+            some: {
+              accepted: false,
+            },
+          },
+        },
+        select: {
+          friendOf: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  Profil: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async acceptFriendRequest({
+    userId,
+    friendId,
+  }: {
+    userId: number;
+    friendId: number[];
+  }) {
+    try {
+      return (
+        (
+          await prisma.userFriend.updateMany({
+            where: {
+              userId,
+              friendId: {
+                in: friendId,
+              },
+            },
+            data: {
+              accepted: true,
+            },
+          })
+        ).count > 0
+      );
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async sendFriendRequest({
+    userId,
+    friendId,
+  }: {
+    userId: number;
+    friendId: number[];
+  }) {
+    try {
+      return (
+        (
+          await prisma.userFriend.createMany({
+            data: friendId.map((id) => ({
+              userId,
+              friendId: id,
+            })),
+          })
+        ).count > 0
+      );
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async getFriendRequests(userId: number) {
+    try {
+      return await prisma.user.findUnique({
+        where: {
+          id: userId,
+          friends: {
+            some: {
+              accepted: false,
+            },
+          },
+        },
+        select: {
+          friends: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  Profil: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async declineFriendRequest({
+    userId,
+    friendId,
+  }: {
+    userId: number;
+    friendId: number[];
+  }) {
+    try {
+      return (
+        (
+          await prisma.userFriend.updateMany({
+            where: {
+              userId,
+              friendId: {
+                in: friendId,
+              },
+            },
+            data: {
+              accepted: false,
+            },
+          })
+        ).count > 0
+      );
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async removeFriend({
+    userId,
+    friendId,
+  }: {
+    userId: number;
+    friendId: number[];
+  }) {
+    try {
+      return (
+        (
+          await prisma.userFriend.deleteMany({
+            where: {
+              userId,
+              friendId: {
+                in: friendId,
+              },
+            },
+          })
+        ).count > 0
+      );
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
 
   static async addUser({
     user,
     profil,
   }: {
     user: Partial<User>;
-    profil?: Omit<Profil, "id"|"createdAt"|"updatedAt"| "userId">;
+    profil?: Omit<Profil, "id" | "createdAt" | "updatedAt" | "userId">;
   }) {
     try {
       if (profil) {
@@ -53,10 +264,24 @@ export default class UserService {
               connect: { id: result.id },
             },
           },
+          include: {
+            Profil: {
+              select: {
+                id: true,
+              },
+            },
+          },
         });
       }
       return await prisma.user.create({
         data: setPassword(user),
+        include: {
+          Profil: {
+            select: {
+              id: true,
+            },
+          },
+        },
       });
     } catch (error) {
       console.error(error);
@@ -67,13 +292,7 @@ export default class UserService {
     }
   }
 
-  static async updateUser({
-    id,
-    user
-  }: {
-    id: number;
-    user: Partial<User>;
-  }) {
+  static async updateUser({ id, user }: { id: number; user: Partial<User> }) {
     try {
       return await prisma.user.update({
         where: { id },
@@ -89,7 +308,6 @@ export default class UserService {
       throw error;
     }
   }
-
 
   static async getUserById(id: number) {
     try {
@@ -117,42 +335,17 @@ export default class UserService {
     }
   }
 
-  static async updateUserFriends({
-    id,
-    friends
-  }: {
-    id: number;
-    friends: number[];
-  }) {
-    try {
-      return await prisma.user.update({
-        where: { id },
-        data: {
-          friends:{
-            connect: friends.map(friendId => ({ id: friendId })),
-          }
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new Error(error.message);
-      }
-      throw error;
-    }
-  }
-
   static async updateUserProfile({
     id,
-    profile
+    profile,
   }: {
     id: number;
-    profile: Omit<Profil, "id"|"createdAt"|"updatedAt"| "userId">;
+    profile: Omit<Profil, "id" | "createdAt" | "updatedAt" | "userId">;
   }) {
     try {
       const user = await prisma.user.findUniqueOrThrow({
         where: { id },
-        select:{Profil: true, id: true}
+        select: { Profil: true, id: true },
       });
 
       if (!user) {
@@ -187,31 +380,36 @@ export default class UserService {
     }
   }
 
-  static async login({
-    email,
-    password
-  }: {
-    email: string;
-    password: string;
-  }) {
+  static async getUserStatus(id: number) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { isOnline: true },
+      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return user.isOnline;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async login({ email, password }: { email: string; password: string }) {
     try {
       const user = await prisma.user.findUnique({
         where: { email },
-        select:{
-          id: true,
-          email: true,
-          phone: true,
-          firstname: true,
-          lastname: true,
-          createdAt: true,
-          updatedAt: true,
-          password: true,
-          Profil:{
-            select:{
+        include: {
+          Profil: {
+            select: {
               id: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
       if (!user) {
         throw new Error("User not found");
@@ -234,14 +432,76 @@ export default class UserService {
     }
   }
 
-  static async deleteUser({
-    id
+
+  static async changeOnlineStatus({ id, isOnline }: { id: number; isOnline: boolean }) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { isOnline: isOnline },
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async forgetPassword({ email }: { email: string }) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      // Generate a password reset token and send it to the user's email
+      // const token = await generatePasswordResetToken(user.id);
+      // await sendPasswordResetEmail(user.email, token);
+      return true;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async resetPassword({
+    userId,
+    newPassword,
   }: {
-    id: number;
+    userId: number;
+    newPassword: string;
   }) {
     try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new Error("Invalid or expired token");
+      }
+      await prisma.user.update({
+        where: { id: userId },
+        data: setPassword(user, newPassword),
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  static async deleteUser({ id }: { id: number }) {
+    try {
       return await prisma.user.delete({
-        where: { id }
+        where: { id },
       });
     } catch (error) {
       console.error(error);

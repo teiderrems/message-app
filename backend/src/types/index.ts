@@ -84,14 +84,31 @@ type CreateMessageDto = {
   };
 };
 
+type UserFriendOfDetail = {
+  friendOf: {
+    id: number;
+    user: {
+      id: number;
+      email: string | null;
+      username: string | null;
+      Profil: {
+        id: number;
+      } | null;
+    };
+  }[];
+};
+
 type UserFriendDetail = {
   friends: {
     id: number;
-    username: string | null;
-    email: string | null;
-    Profil: {
+    user: {
       id: number;
-    } | null;
+      email: string | null;
+      username: string | null;
+      Profil: {
+        id: number;
+      } | null;
+    };
   }[];
 };
 
@@ -101,30 +118,64 @@ type UserFriendDetailDto = {
   avatar?: string;
 }[];
 
-
-type LoginDetail={
+type LoginDetail = {
+  id: number;
+  email: string | null;
+  phone: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  updatedAt: Date;
+  createdAt: Date;
+  Profil: {
     id: number;
-    email: string | null;
-    phone: string | null;
-    firstname: string | null;
-    lastname: string | null;
-    updatedAt: Date;
-    createdAt: Date;
+  } | null;
+};
+
+type LoginDetailDto = {
+  id: number;
+  email: string | null;
+  phone: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  updatedAt: Date;
+  createdAt: Date;
+  avatar?: string;
+};
+
+type UserDetail={
     Profil: {
         id: number;
     } | null;
-}
-
-type LoginDetailDto = {
     id: number;
     email: string | null;
     phone: string | null;
+    username: string | null;
+    firstname: string | null;
+    lastname: string | null;
+    isOnline: boolean;
+    updatedAt: Date;
+    createdAt: Date;
+}
+
+type UserDetailDto={
+    avatar?: string;
+    id: number;
+    email: string | null;
+    phone: string | null;
+    username: string | null;
+    isOnline: boolean;
     firstname: string | null;
     lastname: string | null;
     updatedAt: Date;
     createdAt: Date;
-    avatar?: string;
 }
+
+type HistoryChatItem = {
+  id: number;
+  description: string | null;
+  avatar?: string;
+  updatedAt: string;
+};
 
 export type {
   ChatDetail,
@@ -134,6 +185,10 @@ export type {
   CreateMessageDto,
   UserFriendDetail,
   UserFriendDetailDto,
+  UserFriendOfDetail,
   LoginDetail,
-  LoginDetailDto
+  LoginDetailDto,
+  UserDetail,
+  UserDetailDto,
+  HistoryChatItem
 };

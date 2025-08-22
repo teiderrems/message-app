@@ -31,7 +31,7 @@ export default class ChatController {
         }
 
         try {
-            const chat = await ChatService.addchat({ chat: { description, authorId } });
+            const chat = await ChatService.addChat({ chat: { description, authorId } });
             return res.status(201).json(chat);
         } catch (error) {
             console.error(error);
