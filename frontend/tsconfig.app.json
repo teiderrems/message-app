@@ -30,5 +30,5 @@
       "@messenger/backend/*": ["../backend/src/*"]
     }
   },
-  "include": ["src", "../backend/src/trpc/**/*", "../backend/src/lib/**/*"]
+  "include": ["src", "../backend/src/trpc/**/*", "../backend/src/lib/**/*","../backend/src/types/**/*"]
 }

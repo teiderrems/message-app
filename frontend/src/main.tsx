@@ -8,6 +8,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/trpc/client";
 import LoginPage from "@/pages/auth-login";
 import RegisterPage from "@/pages/auth-register";
+import ChatPage from "./pages/chat-page";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/" element={<App />}>
             <Route path="register" element={<RegisterPage />} />
             <Route path="login" element={<LoginPage />} />
-            <Route path="dashboard" element={<AppLayout />} />
+            <Route path="chats" element={<AppLayout />}>
+              <Route path=":id" element={<ChatPage />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 function useLocalStorage() {
 
     const getValue = (key: string) => {
@@ -20,14 +18,26 @@ function useLocalStorage() {
             console.error("Error writing to localStorage:", error);
         }
     };
-    useEffect(()=>{
-        // This effect runs once to ensure localStorage is available
-        if (typeof window === "undefined") {
-            console.warn("LocalStorage is not available in this environment.");
-        }
-    },[])
 
-    return { getValue, setValue };
+    const clearValue = (key: string) => {
+        if (typeof window === "undefined") return;
+        try {
+            window.localStorage.removeItem(key);
+        } catch (error) {
+            console.error("Error clearing localStorage:", error);
+        }
+    };
+
+    const clearAll = () => {
+        if (typeof window === "undefined") return;
+        try {
+            window.localStorage.clear();
+        } catch (error) {
+            console.error("Error clearing localStorage:", error);
+        }
+    };
+
+    return { getValue, setValue, clearValue, clearAll };
 }
 
 export default useLocalStorage;

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { z } from "zod";
 import {
   Form,
@@ -17,12 +17,12 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import useLocalStorage from "@/hooks/use-local-storage";
 
 const registerFormSchema = z.object({
   email: z.email().max(50).nonempty("Email is required"),
   password: z.string().min(8).max(100).nonempty("Password is required"),
 });
-
 
 export function RegisterForm({
   className,
@@ -36,28 +36,37 @@ export function RegisterForm({
     },
   });
 
-  const {isPending,mutateAsync,error,data}=useMutation(trpc.addUser.mutationOptions());
+  const { isPending, mutateAsync, error } = useMutation(
+    trpc.user.addUser.mutationOptions()
+  );
 
-  const onSubmit=async(values: z.infer<typeof registerFormSchema>)=> {
+  const navigate = useNavigate();
+
+  const { setValue } = useLocalStorage();
+  const onSubmit = async (values: z.infer<typeof registerFormSchema>) => {
     try {
-      await mutateAsync(values);
-      toast("Event has been created." + data?.email,{
-        description: "Please check your inbox for a confirmation email.",
-        duration: 5000,
-        position: "top-right",
-        closeButton: true
-      });
+      const res = await mutateAsync(values);
+      if (res && res.email) {
+        toast("Event has been created." + res?.email, {
+          description: "Please check your inbox for a confirmation email.",
+          duration: 5000,
+          position: "top-right",
+          closeButton: true,
+        });
+        setValue("user", res);
+        navigate("/chats");
+      }
       form.reset();
     } catch {
       console.error(error);
-      toast(error?.message,{
+      toast(error?.message, {
         description: "Please try again.",
         duration: 5000,
         position: "top-right",
-        closeButton: true
+        closeButton: true,
       });
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -79,7 +88,7 @@ export function RegisterForm({
                     <FormItem className="grid gap-3">
                       <FormLabel className="text-lg">Email</FormLabel>
                       <FormControl className="h-12">
-                        <Input  placeholder="m@example.com" {...field} />
+                        <Input placeholder="m@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -111,10 +120,7 @@ export function RegisterForm({
                 </Button>
                 <div className="text-center text-sm">
                   You have an account?{" "}
-                  <NavLink
-                    to="/login"
-                    className="underline underline-offset-4"
-                  >
+                  <NavLink to="/login" className="underline underline-offset-4">
                     Sign in
                   </NavLink>
                 </div>

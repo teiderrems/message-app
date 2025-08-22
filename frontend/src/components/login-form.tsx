@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc/client";
 import useLocalStorage from "@/hooks/use-local-storage";
-import { useAuth } from "./auth-context-provider";
 
 const loginFormSchema = z.object({
   email: z.email().max(50).nonempty("Email is required"),
@@ -37,35 +36,37 @@ export function LoginForm({
     },
   });
 
-  const {isPending,mutateAsync,error,data}=useMutation(trpc.login.mutationOptions());
+  const { isPending, mutateAsync, error } = useMutation(
+    trpc.user.login.mutationOptions()
+  );
   const { setValue } = useLocalStorage();
-  const { user }=useAuth();
+  const navigate = useNavigate();
 
-  const onSubmit=async(values: z.infer<typeof loginFormSchema>)=> {
+  const onSubmit = async (values: z.infer<typeof loginFormSchema>) => {
     try {
-      await mutateAsync(values);
-      if (data && data.email) {
-        toast("Login successful for " + data?.email,{
+      const res = await mutateAsync(values);
+      if (res && res.email) {
+        toast("Login successful for " + res?.email, {
           description: "Welcome back!",
           duration: 5000,
           position: "top-right",
-          closeButton: true
+          closeButton: true,
         });
-        setValue("user", data);
-        console.log(user);
+        setValue("user", res);
+        navigate("/chats");
       }
       form.reset();
     } catch {
       console.error(error);
-      toast(error?.message,{
+      toast(error?.message, {
         description: "Please try again.",
         duration: 5000,
         position: "top-right",
         closeButton: true,
       });
     }
-  }
-  
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -98,13 +99,13 @@ export function LoginForm({
                   render={({ field }) => (
                     <FormItem className="grid gap-3">
                       <div className="flex items-center">
-                      <FormLabel className="text-lg">Password</FormLabel>
-                      <NavLink
-                      to="#"
-                      className="ml-auto text-sm underline-offset-2 hover:underline"
-                    >
-                      Forgot your password?
-                    </NavLink>
+                        <FormLabel className="text-lg">Password</FormLabel>
+                        <NavLink
+                          to="#"
+                          className="ml-auto text-sm underline-offset-2 hover:underline"
+                        >
+                          Forgot your password?
+                        </NavLink>
                       </div>
                       <FormControl className="h-12">
                         <Input

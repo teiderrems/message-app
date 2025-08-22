@@ -1,6 +1,5 @@
 import * as React from "react"
 import {
-  IconDashboard,
   IconInnerShadowTop,
 } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
@@ -14,23 +13,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import useLocalStorage from "@/hooks/use-local-storage"
+import { useState } from "react"
+import type{ User } from "@/generated/prisma"
+import { useQuery } from "@tanstack/react-query"
+import { trpc } from "@/lib/trpc/client"
 
-const data = {
-  user: {
-    name: "rems",
-    email: "rems@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: IconDashboard,
-    },
-  ]
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  const { getValue } = useLocalStorage();
+  const [user, _] = useState<Partial<User>&{avatar:string}>(getValue("user"));
+
+  const { data: chats } = useQuery(trpc.chat.getChatsByUserId.queryOptions({userId:user?.id||1}));
+
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -49,11 +46,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={chats} />
         {/* Nav Groups */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser/>
       </SidebarFooter>
     </Sidebar>
   )
