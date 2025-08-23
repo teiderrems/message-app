@@ -7,22 +7,7 @@ type ChatDetail = {
       id: number;
     } | null;
   };
-  messages: {
-    id: number;
-    content: string | null;
-    createdAt: Date;
-    attachments: {
-      id: number;
-    }[];
-    author: {
-      id: number;
-      username: string | null;
-      email: string | null;
-      Profil: {
-        id: number;
-      } | null;
-    };
-  }[];
+  messages: MessageDetail[];
 } | null;
 
 type ChatDetailDto = {
@@ -32,23 +17,14 @@ type ChatDetailDto = {
     username: string | null;
     avatar?: string;
   };
-  messages: {
-    id: number;
-    content: string | null;
-    createdAt: Date;
-    attachments?: string[];
-    author: {
-      id: number;
-      username: string | null;
-      avatar?: string;
-    };
-  }[];
+  messages: MessageDetailDto[];
 };
 
 type MessageDetail = {
   id: number;
   content: string | null;
   createdAt: Date;
+  isViewed: boolean;
   attachments: {
     id: number;
   }[];
@@ -65,7 +41,8 @@ type MessageDetail = {
 type MessageDetailDto = {
   id: number;
   content: string | null;
-  createdAt: Date;
+  createdAt: string;
+  isViewed: boolean;
   attachments?: string[];
   author: {
     id: number;
@@ -166,8 +143,8 @@ type UserDetailDto={
     isOnline: boolean;
     firstname: string | null;
     lastname: string | null;
-    updatedAt: Date;
-    createdAt: Date;
+    updatedAt: string;
+    createdAt: string;
 }
 
 type HistoryChatItem = {

@@ -12,6 +12,7 @@ export default class MessageService {
       "id" | "createdAt" | "updatedAt" | "messageId"
     >[];
   }) {
+
     try {
       if (attachments) {
         return await prisma.message.create({
@@ -33,9 +34,7 @@ export default class MessageService {
               },
             },
           },
-          select: {
-            id: true,
-            content: true,
+          include: {
             attachments: {
               select: {
                 id: true,
@@ -53,7 +52,6 @@ export default class MessageService {
                 },
               },
             },
-            createdAt: true,
           },
         });
       }
@@ -72,9 +70,7 @@ export default class MessageService {
             },
           },
         },
-        select: {
-          id: true,
-          content: true,
+        include: {
           attachments: {
             select: {
               id: true,
@@ -91,8 +87,7 @@ export default class MessageService {
                 },
               },
             },
-          },
-          createdAt: true,
+          }
         },
       });
     } catch (error) {
@@ -251,25 +246,27 @@ export default class MessageService {
 
   static async updateMessageIsViewed({
     id,
+    userId
   }: {
     id: number;
+    userId: number;
   }): Promise<boolean> {
     try {
       const msg = await prisma.message.findUniqueOrThrow({
         where: { id },
-        select: { id: true, isViewed: true },
+        select: { id: true, isViewed: true, authorId: true},
       });
 
-      if (msg) {
+      if (msg  && msg.isViewed === false && msg.authorId !== userId) {
         return (
-          (await prisma.message.update({
+          await prisma.message.update({
             where: { id },
             data: { isViewed: true },
             select: {
               id: true,
+              isViewed: true,
             },
-          })) !== null
-        );
+          })).isViewed;
       }
       return false;
     } catch (error) {

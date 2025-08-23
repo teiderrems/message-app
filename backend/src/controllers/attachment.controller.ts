@@ -3,16 +3,17 @@ import { convertFileToAttachment } from "@/util";
 import { Request, Response } from "express";
 
 export default class AttachmentController {
-  
-
   static async createAttachment(req: Request, res: Response) {
     const { messageId } = req.body;
     if (!req.files || !messageId) {
-        return res.status(400).json({ error: "Invalid file format" });
+      return res.status(400).json({ error: "Invalid file format" });
     }
     const attachments = convertFileToAttachment(req);
     try {
-      const createdAttachments = await AttachmentService.createAttachment(messageId, attachments);
+      const createdAttachments = await AttachmentService.createAttachment(
+        messageId,
+        attachments
+      );
       return res.status(201).json(createdAttachments);
     } catch (error) {
       console.error(error);
@@ -47,12 +48,17 @@ export default class AttachmentController {
       return res.status(400).json({ error: "Invalid attachment ID or data" });
     }
     if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: "Invalid file format or no files uploaded" });
+      return res
+        .status(400)
+        .json({ error: "Invalid file format or no files uploaded" });
     }
     const attachments = convertFileToAttachment(req);
 
     try {
-      const updatedAttachment = await AttachmentService.updateAttachment(+id, attachments.at(0)!);
+      const updatedAttachment = await AttachmentService.updateAttachment(
+        +id,
+        attachments.at(0)!
+      );
       if (updatedAttachment) {
         return res.status(200).json(updatedAttachment);
       }
@@ -73,12 +79,23 @@ export default class AttachmentController {
     try {
       const attachment = await AttachmentService.getAttachmentById(+id);
       if (attachment) {
+        // This appears to be a backend/Node.js/Express code correction request
+        // Here's the corrected version with proper async handling and error management
+
         res.set({
-            'Content-Type': attachment.mimetype,
-            'Content-Disposition': `inline; filename="${attachment.filename}"`,
-            'Content-Length': attachment.data.length,
+          "Content-Type": attachment.mimetype || "application/octet-stream",
+          "Content-Disposition": `inline; filename="${encodeURIComponent(
+            attachment.filename!
+          )}"`,
+          "Content-Length": attachment.data.length.toString(),
+          "Cache-Control": "public, max-age=31536000", // Optional: add caching
         });
-        return res.status(200).send(attachment.data);
+        // Ensure the data is properly formatted (Buffer or string)
+        const data = Buffer.isBuffer(attachment.data)
+          ? attachment.data
+          : Buffer.from(attachment.data);
+
+        return res.status(200).send(data);
       }
       return res.status(404).json({ error: "Attachment not found" });
     } catch (error) {

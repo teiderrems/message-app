@@ -307,15 +307,40 @@ const messageRouter = router({
     .input(
       z.object({
         messageId: z.number().min(1),
+        userId: z.number().min(1),
       })
     )
     .mutation(async ({ input }) => {
-      const { messageId } = input;
+      const { messageId,userId } = input;
       const result = await MessageService.updateMessageIsViewed({
         id: messageId,
+        userId,
       });
       return result !== null;
     }),
+    deleteMessage: publicProcedure
+      .input(
+        z.object({
+          id: z.number().min(1),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id } = input;
+        const result = await MessageService.deleteMessage({ id });
+        return result !== null;
+      }),
+      updateMessage: publicProcedure
+        .input(
+          z.object({
+            id: z.number().min(1),
+            content: z.string().min(1).max(500),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, content } = input;
+          const result = await MessageService.updateMessage({ id, message: { content } });
+          return result !== null;
+        }),
 });
 
 const appRouter = router({

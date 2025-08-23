@@ -27,8 +27,6 @@ export default function AppLayout() {
 
 
   useEffect(() => {
-    console.log(getValue("user"));
-
     if (getValue("user")) {
       changeStatus(true).catch(console.error);
       return () => {

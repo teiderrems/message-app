@@ -34,7 +34,7 @@ export function ChatHeader() {
   if (!user || !user.id) {
     return null;
   }
-  const { data: userStatus, isFetching, refetch } = useQuery(
+  const { data: userStatus,isError,isSuccess, refetch } = useQuery(
     trpc.user.getUserStatus.queryOptions({ userId: user.id })
   );
   useEffect(() => {
@@ -42,7 +42,7 @@ export function ChatHeader() {
     if (!userStatus) {
      refetch().catch(console.error);
     }
-  }, [isFetching, userStatus]);
+  }, [isSuccess,isError]);
 
   return (
     <header className="bg-green-600 text-white px-4 py-3 flex items-center justify-between shadow-md">
@@ -51,7 +51,7 @@ export function ChatHeader() {
           <span className="text-lg font-semibold">{user.avatar}</span>
         </div>
         <div>
-          <h2 className="font-semibold">John Doe</h2>
+          <h2 className="font-semibold">{user.username || user.email}</h2>
           <p className="text-green-100 text-xs flex items-center">
             { userStatus ? <span className="w-2 h-2 bg-green-300 rounded-full mr-1"></span> : <span className="w-2 h-2 bg-black rounded-full mr-1"></span>}
             {userStatus ? "En ligne" : "Hors ligne"}

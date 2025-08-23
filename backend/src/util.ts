@@ -1,11 +1,9 @@
 import { Attachment, Profil, User } from "@/generated/prisma";
-import e, { Request } from "express";
+import { Request } from "express";
 import { v4 } from "uuid";
 import {
   ChatDetail,
   ChatDetailDto,
-  LoginDetail,
-  LoginDetailDto,
   MessageDetail,
   MessageDetailDto,
   UserDetail,
@@ -15,7 +13,6 @@ import {
   UserFriendOfDetail,
 } from "./types";
 import { genSaltSync, hashSync } from "bcrypt";
-import { email } from "zod";
 
 const convertFileToProfile = (
   req: Request
@@ -90,21 +87,7 @@ const convertChatDetailToChatDetailDto = (
         ? `${protocol}://${host}/api/avatars/${chat.author.Profil.id}`
         : chat.author.username?.substring(0, 2).toLocaleUpperCase(),
     },
-    messages: chat.messages.map((message) => ({
-      id: message.id,
-      content: message.content,
-      createdAt: message.createdAt,
-      attachments: message.attachments.map(
-        (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}`
-      ),
-      author: {
-        id: message.author.id,
-        username: message.author.username,
-        avatar: message.author.Profil?.id
-          ? `${protocol}://${host}/api/avatars/${message.author.Profil.id}`
-          : getAvatar(message.author.email || "guest@gmail.com"),
-      },
-    })),
+    messages: chat.messages.map((message) => convertMessageDetailToMessageDetailDto(protocol, host, message)),
   };
 };
 
@@ -112,15 +95,12 @@ const convertMessageDetailToMessageDetailDto = (
   protocol: string,
   host: string,
   message: MessageDetail
-): MessageDetailDto | null => {
-  if (!message) {
-    return null;
-  }
-
+): MessageDetailDto=> {
   return {
     id: message.id,
     content: message.content,
-    createdAt: message.createdAt,
+    createdAt: message.createdAt.toLocaleTimeString(),
+    isViewed: message.isViewed,
     attachments: message.attachments.map(
       (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}`
     ),
@@ -195,8 +175,8 @@ const convertUserDetailToUserDetailDto=(protocol: string, host: string, user: Us
     username: user.username,
     firstname: user.firstname,
     lastname: user.lastname,
-    updatedAt: user.updatedAt,
-    createdAt: user.createdAt,
+    updatedAt: user.updatedAt.toLocaleDateString(),
+    createdAt: user.createdAt.toLocaleDateString(),
   };
 };
 

@@ -39,10 +39,7 @@ export default class ChatService {
             },
           },
           messages: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
+            include: {
               attachments: {
                 select: {
                   id: true,
@@ -184,13 +181,18 @@ export default class ChatService {
     chatId: number;
   }) {
     try {
-      const chat = await prisma.userChat.findUnique({
-        where: { id: chatId, userId: userId },
+      const chat = await prisma.userChat.findMany({
+        where: { 
+          AND:[
+            { userId: userId },
+            { chatId: chatId }  
+          ]
+        },
         select: {
           id: true,
         },
       });
-      return chat?.id !== undefined;
+      return chat.length > 0;
     } catch (error) {
       console.error(error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -207,19 +209,26 @@ export default class ChatService {
     userId: number[];
     chatId: number;
   }) {
+    const userIds = userId.filter(async (id) => {
+      try {
+        const isInChat = await this.isUserInChat({ userId: id, chatId });
+        console.log(isInChat);
+        return !isInChat;
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+    });
     try {
-      await prisma.userChat.createMany({
-        data: userId.map((id) => ({
-          user: {
-            connect: { id },
-          },
-          chat: {
-            connect: { id: chatId },
-          },
-          userId: id,
-          chatId: chatId,
-        })),
-      });
+      console.log(userIds, userId);
+      if (userIds.length > 0) {
+        await prisma.userChat.createMany({
+          data: userIds.map((id) => ({
+            userId: id,
+            chatId: chatId,
+          })),
+        });
+      }
     } catch (error) {
       console.error(error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

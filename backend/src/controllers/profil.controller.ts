@@ -57,11 +57,19 @@ export default class ProfilController{
           const profil = await ProfilService.getProfilById(+id);
           if (profil) {
             res.set({
-                'Content-Type': profil.mimetype,
-                'Content-Disposition': `inline; filename="${profil.filename}"`,
-                'Content-Length': profil.data.length,
-            });
-            return res.status(200).send(profil.data);
+          "Content-Type": profil.mimetype || "application/octet-stream",
+          "Content-Disposition": `inline; filename="${encodeURIComponent(
+            profil.filename || "unknown"
+          )}"`,
+          "Content-Length": profil.data.length.toString(),
+          "Cache-Control": "public, max-age=31536000", // Optional: add caching
+        });
+        // Ensure the data is properly formatted (Buffer or string)
+        const data = Buffer.isBuffer(profil.data)
+          ? profil.data
+          : Buffer.from(profil.data);
+
+        return res.status(200).send(data);
           }
           return res.status(404).json({ error: "Profil not found" });
         } catch (error) {
