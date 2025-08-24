@@ -3,7 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 
 
-const messageRouter = Router();
+const messageRouter: Router = Router();
 
 messageRouter.get("/:id", MessageController.getMessage);
 messageRouter.get("/chat/:chatId", MessageController.getMessagesByChatId);

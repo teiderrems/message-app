@@ -3,7 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 
 
-const profilRouter = Router();
+const profilRouter: Router = Router();
 
 profilRouter.get("/:id", ProfilController.getProfilById);
 

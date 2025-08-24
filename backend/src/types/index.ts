@@ -12,12 +12,20 @@ type ChatDetail = {
 
 type ChatDetailDto = {
   id: number;
-  author: {
-    id: number;
-    username: string | null;
-    avatar?: string;
+  destinator: {
+    id?: number;
+    username?: string | null;
+    email?: string | null;
+    avatar?: string | null;
   };
   messages: MessageDetailDto[];
+};
+
+type DestinatorDto = {
+  id: number;
+  email: string | null;
+  username: string | null;
+  avatar?: string | null;
 };
 
 type MessageDetail = {
@@ -41,7 +49,7 @@ type MessageDetail = {
 type MessageDetailDto = {
   id: number;
   content: string | null;
-  createdAt: string;
+  createdAt: Date;
   isViewed: boolean;
   attachments?: string[];
   author: {
@@ -143,15 +151,15 @@ type UserDetailDto={
     isOnline: boolean;
     firstname: string | null;
     lastname: string | null;
-    updatedAt: string;
-    createdAt: string;
+    updatedAt: Date;
+    createdAt: Date;
 }
 
 type HistoryChatItem = {
   id: number;
   description: string | null;
   avatar?: string;
-  updatedAt: string;
+  updatedAt: Date;
 };
 
 export type {
@@ -167,5 +175,6 @@ export type {
   LoginDetailDto,
   UserDetail,
   UserDetailDto,
-  HistoryChatItem
+  HistoryChatItem,
+  DestinatorDto
 };

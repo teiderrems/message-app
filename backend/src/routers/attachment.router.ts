@@ -3,7 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 
 
-const attachmentRouter = Router();
+const attachmentRouter: Router = Router();
 
 attachmentRouter.post("/", multer().array("attachments"), AttachmentController.createAttachment);
 attachmentRouter.delete("/:id", AttachmentController.deleteAttachment);

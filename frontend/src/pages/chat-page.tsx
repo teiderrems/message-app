@@ -5,7 +5,7 @@ import useLocalStorage from "@/hooks/use-local-storage";
 import { useParams } from "react-router"; // ✅ Vérifie que c'est bien react-router-dom
 import MessageBubble from "@/components/message-bubble";
 import { Attachment, Message } from "@/generated/prisma";
-import { MessageDetailDto } from "@/types";
+import { ChatDetailDto, DestinatorDto, MessageDetailDto } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc/client";
 import socket from "@/util"; // ✅ Assure-toi que c’est bien l’instance socket
@@ -14,10 +14,10 @@ const ChatPage = () => {
   const { id } = useParams<{ id: string }>(); // ✅ Typage correct
   const chatId = Number(id);
 
-  const { data, isSuccess, refetch } = useQuery(trpc.chat.getChatById.queryOptions({ id: chatId }));
+  const [userId, setUserId] = useState<number>(1);
+  const { data, isSuccess, refetch } = useQuery(trpc.chat.getChatById.queryOptions({ id: chatId, userId }));
 
   const [messages, setMessages] = useState<MessageDetailDto[]>([]);
-  const [userId, setUserId] = useState<number>(1);
 
   const { getValue } = useLocalStorage();
 
@@ -134,7 +134,7 @@ const ChatPage = () => {
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <ChatHeader/>
+      <ChatHeader destinator={(data as ChatDetailDto | undefined)?.destinator as DestinatorDto} />
 
       {/* Messages Container */}
       <div ref={messageContentRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-green-50 to-white">

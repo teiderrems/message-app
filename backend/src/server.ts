@@ -16,11 +16,15 @@ import ChatService from "./services/chat.service";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import appRouter from "@/trpc/router";
 import { createContext } from "@/trpc/server";
+import "dotenv/config";
 
 interface AuthSocket extends Socket {
   userId?: number;
   chatId?: number;
 }
+
+const host = process.env.HOST;
+const protocol = process.env.PROTOCOL;
 
 const allowedOrigins: string[] = [
   "http://localhost:5173",
@@ -148,10 +152,6 @@ io.on("connection", (socket: AuthSocket) => {
 
   // Fonction utilitaire pour attacher les listeners une fois dans le salon
   function setupChatEventListeners(socket: AuthSocket, chatId: number) {
-    const url = new URL(socket.request.url || "http://localhost:8000"); // fallback URL
-    const protocol = url.protocol.slice(0, -1); // enlever les ":"
-    const host = url.host;
-    const port = url.port;
 
     console.log(`User ${socket.userId} a rejoint le salon chat_${chatId}`);
     // Écouter les messages
@@ -174,8 +174,8 @@ io.on("connection", (socket: AuthSocket) => {
           });
           io.to(`chat_${chatId}`).emit("chat_message", {
             message: convertMessageDetailToMessageDetailDto(
-              protocol,
-              `${host}${port ? `:${port}` : ""}`,
+              protocol!,
+              `${host}${PORT ? `:${PORT}` : ""}`,
               data
             ),
           });

@@ -1,7 +1,7 @@
 import ChatController from "@/controllers/chat.controller";
 import { Router } from "express";
 
-const chatRouter = Router();
+const chatRouter: Router = Router();
 
 chatRouter.post("/", ChatController.createChat);
 chatRouter.get("/:id", ChatController.getChatById);

@@ -72,20 +72,23 @@ const convertFileToAttachment = (
 const convertChatDetailToChatDetailDto = (
   protocol: string,
   host: string,
-  chat: ChatDetail
+  chat: ChatDetail,
+  userId: number
 ): ChatDetailDto | null => {
   if (!chat) {
     return null;
   }
 
+  const destinator=chat.messages.find(message=>message.author.id!==userId)?.author;
+
   return {
     id: chat.id,
-    author: {
-      id: chat.author.id,
-      username: chat.author.username,
-      avatar: chat.author.Profil?.id
-        ? `${protocol}://${host}/api/avatars/${chat.author.Profil.id}`
-        : chat.author.username?.substring(0, 2).toLocaleUpperCase(),
+    destinator: {
+      id: destinator?.id,
+      email: destinator?.email,
+      avatar: destinator?.Profil?.id
+        ? `${protocol}://${host}/api/avatars/${destinator.Profil.id}`
+        : getAvatar(destinator?.email || "guest@gmail.com"),
     },
     messages: chat.messages.map((message) => convertMessageDetailToMessageDetailDto(protocol, host, message)),
   };
@@ -99,7 +102,7 @@ const convertMessageDetailToMessageDetailDto = (
   return {
     id: message.id,
     content: message.content,
-    createdAt: message.createdAt.toLocaleTimeString(),
+    createdAt: message.createdAt,
     isViewed: message.isViewed,
     attachments: message.attachments.map(
       (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}`
@@ -175,8 +178,8 @@ const convertUserDetailToUserDetailDto=(protocol: string, host: string, user: Us
     username: user.username,
     firstname: user.firstname,
     lastname: user.lastname,
-    updatedAt: user.updatedAt.toLocaleDateString(),
-    createdAt: user.createdAt.toLocaleDateString(),
+    updatedAt: user.updatedAt,
+    createdAt: user.createdAt,
   };
 };
 

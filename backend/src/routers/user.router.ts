@@ -3,7 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 
 
-const userRouter = Router();
+const userRouter: Router = Router();
 
 userRouter.get("/", UserController.getAllUsers);
 userRouter.get("/:id", UserController.getUser);

@@ -243,6 +243,7 @@ const chatRouter = router({
     .input(
       z.object({
         id: z.number().min(1),
+        userId: z.number().min(1),
       })
     )
     .query(async ({ input }) => {
@@ -250,7 +251,8 @@ const chatRouter = router({
       return convertChatDetailToChatDetailDto(
         protocol!,
         `${host}:${port}`,
-        chat
+        chat,
+        input.userId
       );
     }),
   createChat: publicProcedure

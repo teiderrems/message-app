@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuItem } from "./ui/sidebar";
-import { useEffect } from "react";
 
 const MessageBubble = ({
   message,
@@ -48,11 +47,6 @@ const MessageBubble = ({
       navigator.clipboard.writeText(message.content);
     }
   };
-
-  useEffect(()=>{
-    // Handle attachment changes
-    console.log(message.attachments);
-  },[message.attachments])
 
   return (
     <div
@@ -138,7 +132,7 @@ const MessageBubble = ({
           <span
             className={`text-xs ${isMe ? "text-green-400" : "text-gray-500"}`}
           >
-            {formatTime(message.createdAt)}
+            {formatTime((new Date(message.createdAt)).toLocaleTimeString('fr-FR'))}
           </span>
           {isMe &&
             (message.isViewed ? (

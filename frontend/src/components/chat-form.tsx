@@ -101,7 +101,7 @@ function ChatForm(props: Props) {
 
   return (
     <form
-      className="bg-white border-t border-gray-200 px-4 py-3"
+      className="bg-white border-t border-gray-200 px-4 py-2"
       onSubmit={handleSubmit}
       onKeyDown={(e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -176,7 +176,7 @@ function ChatForm(props: Props) {
             placeholder={selectedFiles && selectedFiles.length > 0 ? "Ajouter un message (facultatif)" : "Écrire un message"}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            className="w-full h-12 border-0 focus:border-0 focus:border-white placeholder:italic px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full h-10 border-0 focus:border-0 focus:border-white placeholder:italic px-4 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
         

@@ -10,10 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useNavigate } from "react-router";
-import { useEffect, useState } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
-import { type User } from "@/generated/prisma";
+import { useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import {
   IconUserCircle,
@@ -23,22 +20,23 @@ import {
 } from "@tabler/icons-react";
 import { trpc } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { DestinatorDto } from "@/types";
 
-export function ChatHeader() {
-  const { getValue, clearValue } = useLocalStorage();
-  const [user, setUser] = useState<Partial<User> & { avatar: string } | null>(
-    getValue("user")
-  );
 
-  const navigate = useNavigate();
-  if (!user || !user.id) {
+interface ChatHeaderProps {
+  destinator?: DestinatorDto;
+}
+
+
+export function ChatHeader({ destinator }: ChatHeaderProps) {
+
+  if (!destinator || !destinator.id) {
     return null;
   }
   const { data: userStatus,isError,isSuccess, refetch } = useQuery(
-    trpc.user.getUserStatus.queryOptions({ userId: user.id })
+    trpc.user.getUserStatus.queryOptions({ userId: destinator.id })
   );
   useEffect(() => {
-    setUser(getValue("user"));
     if (!userStatus) {
      refetch().catch(console.error);
     }
@@ -48,10 +46,10 @@ export function ChatHeader() {
     <header className="bg-green-600 text-white px-4 py-3 flex items-center justify-between shadow-md">
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-          <span className="text-lg font-semibold">{user.avatar}</span>
+          <span className="text-lg font-semibold">{destinator?.avatar}</span>
         </div>
         <div>
-          <h2 className="font-semibold">{user.username || user.email}</h2>
+          <h2 className="font-semibold">{destinator?.username || destinator?.email}</h2>
           <p className="text-green-100 text-xs flex items-center">
             { userStatus ? <span className="w-2 h-2 bg-green-300 rounded-full mr-1"></span> : <span className="w-2 h-2 bg-black rounded-full mr-1"></span>}
             {userStatus ? "En ligne" : "Hors ligne"}
@@ -89,19 +87,19 @@ export function ChatHeader() {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-full border p-2">
-                      <AvatarImage src={user.avatar} alt={"avatar"} />
-                      {!user.avatar.includes("http") && (
+                      <AvatarImage src={destinator?.avatar || ""} alt={"avatar"} />
+                      {destinator && destinator.avatar && !destinator.avatar.includes("http") && (
                         <AvatarFallback className="rounded-full">
-                          {user.avatar}
+                          {destinator.avatar}
                         </AvatarFallback>
                       )}
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-medium">
-                        {user?.email}
+                        {destinator?.email}
                       </span>
                       <span className="text-muted-foreground truncate text-xs">
-                        {user?.email}
+                        {destinator?.email}
                       </span>
                     </div>
                   </div>
@@ -123,11 +121,7 @@ export function ChatHeader() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => {
-                    clearValue("user");
-                    setUser(null);
-                    navigate("/login");
-                  }}
+                  
                   className="hover:cursor-pointer"
                 >
                   <IconLogout />
