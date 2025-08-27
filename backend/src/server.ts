@@ -14,9 +14,9 @@ import { Attachment, Message } from "./generated/prisma";
 import { convertMessageDetailToMessageDetailDto } from "./util";
 import ChatService from "./services/chat.service";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import appRouter from "@/trpc/router";
-import { createContext } from "@/trpc/server";
 import "dotenv/config";
+import appRouter from "./trpc/app-router";
+import UserService from "./services/user.service";
 
 interface AuthSocket extends Socket {
   userId?: number;
@@ -73,7 +73,7 @@ app.use(
   "/api/trpc",
   trpcExpress.createExpressMiddleware({
     router: appRouter,
-    createContext,
+    createContext: () => ({}),
   })
 );
 app.use("/api/avatars", (req, res, next) => {
@@ -152,7 +152,6 @@ io.on("connection", (socket: AuthSocket) => {
 
   // Fonction utilitaire pour attacher les listeners une fois dans le salon
   function setupChatEventListeners(socket: AuthSocket, chatId: number) {
-
     console.log(`User ${socket.userId} a rejoint le salon chat_${chatId}`);
     // Écouter les messages
     socket.on(
@@ -172,23 +171,85 @@ io.on("connection", (socket: AuthSocket) => {
             message,
             attachments,
           });
-          io.to(`chat_${chatId}`).emit("chat_message", {
-            message: convertMessageDetailToMessageDetailDto(
-              protocol!,
-              `${host}${PORT ? `:${PORT}` : ""}`,
-              data
-            ),
+          if (message.chatId === socket.chatId) {
+            io.to(`chat_${chatId}`).emit("chat_message", {
+              message: convertMessageDetailToMessageDetailDto(
+                protocol!,
+                `${host}${PORT ? `:${PORT}` : ""}`,
+                data
+              ),
+            });
+            // Marquer comme reçu (pas encore lu)
+            io.to(`chat_${chatId}`).emit("message_status", {
+              messageId: data.id,
+              isViewed: data.isViewed, // encore non lu
+            });
+          }
+        } catch (err) {
+          console.error("Erreur en envoyant le message:", err);
+          io.to(`chat_${chatId}`).emit("error", {
+            message: "Échec de l'envoi du message.",
           });
+        }
+      }
+    );
 
-          // Marquer comme reçu (pas encore lu)
-          socket.to(`chat_${chatId}`).emit("message_status", {
-            messageId: data.id,
-            isViewed: false, // encore non lu
+    socket.on(
+      "update_description",
+      async ({ chatId, content }: { chatId: number; content: string }) => {
+        try {
+          await ChatService.updateChat({
+            id: chatId,
+            chat: {
+              description: content,
+            },
+          });
+          io.to(`chat_${chatId}`).emit("succes", {
+            message: "La description du chat a été mise à jour avec succes.",
           });
         } catch (err) {
           console.error("Erreur en envoyant le message:", err);
-          socket.emit("error", { message: "Échec de l'envoi du message." });
+          io.to(`chat_${chatId}`).emit("error", {
+            message: "Échec de l'envoi du message.",
+          });
         }
+      }
+    );
+
+    // Écouter les événements de saisie
+    socket.on(
+      "user_typing",
+      ({
+        isTyping,
+        chatId,
+        userId,
+        destinatorId,
+      }: {
+        isTyping: boolean;
+        chatId: number;
+        userId: number;
+        destinatorId: number;
+      }) => {
+        const key = `${destinatorId}:${chatId}`;
+        const socketId = sessions.get(key);
+        const oldSocket = io.sockets.sockets.get(socketId!);
+        oldSocket?.emit("user_typing", {
+          chatId,
+          isTyping,
+          userId,
+        });
+        
+        oldSocket?.emit("user_typing_indicator", {
+          chatId,
+          isTyping,
+          userId,
+        });
+        
+        oldSocket?.emit("user_typing_chat", {
+          chatId,
+          isTyping,
+          userId,
+        });
       }
     );
 
@@ -209,6 +270,15 @@ io.on("connection", (socket: AuthSocket) => {
         console.error("Erreur en marquant le message comme lu:", err);
       }
     });
+
+    socket.on('user_online',async({userId,isOnline}:{userId:number,isOnline:boolean})=>{
+      try {
+        const res=await UserService.changeOnlineStatus({id:userId,isOnline});
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    })
 
     socket.on("leave_chat", () => {
       const { userId, chatId } = socket;

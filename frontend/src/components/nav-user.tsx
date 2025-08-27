@@ -27,7 +27,7 @@ import useLocalStorage from "@/hooks/use-local-storage";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/lib/trpc";
 
 export function NavUser({}: {}) {
   const { isMobile } = useSidebar();

@@ -1,21 +1,23 @@
 import z from "zod";
-import { publicProcedure, router } from "../server";
+import { publicProcedure, router } from "..";
 import UserService from "@/services/user.service";
 import ChatService from "@/services/chat.service";
 import {
   convertChatDetailToChatDetailDto,
+  convertChatItemDetailToChatItemDetailDto,
   convertUserDetailToUserDetailDto,
   convertUserFriendDetailToUserFriendDetailDto,
   convertUserFriendOfDetailToUserFriendDetailDto,
+  getAvatar,
 } from "@/util";
 import "dotenv/config";
 import MessageService from "@/services/message.service";
 
-const port = process.env.PORT;
+export const port = process.env.PORT;
 const host = process.env.HOST;
 const protocol = process.env.PROTOCOL;
 
-const userRouter = router({
+export const userRouter = router({
   addUser: publicProcedure
     .input(
       z.object({
@@ -207,20 +209,39 @@ const userRouter = router({
       });
       return result !== null;
     }),
-    getUserStatus: publicProcedure
-      .input(
-        z.object({
-          userId: z.number().min(1),
-        })
-      )
-      .query(async ({ input }) => {
-        const { userId } = input;
-        const isOnline = await UserService.getUserStatus(userId);
-        return isOnline;
-      }),
+  getUserStatus: publicProcedure
+    .input(
+      z.object({
+        userId: z.number().min(1),
+      })
+    )
+    .query(async ({ input }) => {
+      const { userId } = input;
+      const isOnline = await UserService.getUserStatus(userId);
+      return isOnline;
+    }),
+
+  searchUserByQuery: publicProcedure
+    .input(
+      z.object({
+        query: z.string().min(1, "Query is required"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return (await UserService.searchUserByQuery(input.query)).map((u) => {
+        return {
+          id: u.id,
+          email: u.email,
+          username: u.username,
+          createdAt:u.createdAt,
+          isOnline:u.isOnline,
+          avatar: getAvatar(u.email || u.username || "guest@gmail.com"),
+        };
+      });
+    }),
 });
 
-const chatRouter = router({
+export const chatRouter = router({
   getChatsByUserId: publicProcedure
     .input(
       z.object({
@@ -230,14 +251,14 @@ const chatRouter = router({
     .query(async ({ input }) => {
       const { userId } = input;
       const chats = await ChatService.getChatsByUserId(userId);
-      return chats.map((chat) => ({
-        id: chat.id,
-        description: chat.description,
-        avatar: chat.description
-          ? chat.description.charAt(0).toUpperCase()
-          : "C",
-        updatedAt: chat.updatedAt,
-      }));
+      return chats.map((chat) =>
+        convertChatItemDetailToChatItemDetailDto(
+          protocol!,
+          `${host}:${port}`,
+          chat,
+          userId
+        )
+      );
     }),
   getChatById: publicProcedure
     .input(
@@ -248,23 +269,37 @@ const chatRouter = router({
     )
     .query(async ({ input }) => {
       const chat = await ChatService.getChatById(input.id);
-      return convertChatDetailToChatDetailDto(
+      if (!chat) {
+        return null;
+      }
+      const chatDto = convertChatDetailToChatDetailDto(
         protocol!,
         `${host}:${port}`,
         chat,
         input.userId
       );
+      if (!chatDto) {
+        return null;
+      }
+      return {
+        destinator: chatDto.destinator,
+        messages: chatDto.messages,
+      };
     }),
   createChat: publicProcedure
     .input(
       z.object({
         authorId: z.number().min(1),
+        destinatorId: z.number().min(1),
         description: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const chat = await ChatService.addChat({ chat: input });
-      return chat !== null;
+      const chat = await ChatService.addChat({destinatorId:input.destinatorId, chat: {
+        description:input.description,
+        authorId:input.authorId
+      } });
+      return chat.id;
     }),
   updateChat: publicProcedure
     .input(
@@ -304,7 +339,7 @@ const chatRouter = router({
     }),
 });
 
-const messageRouter = router({
+export const messageRouter = router({
   changeViewStatus: publicProcedure
     .input(
       z.object({
@@ -313,44 +348,37 @@ const messageRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { messageId,userId } = input;
+      const { messageId, userId } = input;
       const result = await MessageService.updateMessageIsViewed({
         id: messageId,
         userId,
       });
       return result !== null;
     }),
-    deleteMessage: publicProcedure
-      .input(
-        z.object({
-          id: z.number().min(1),
-        })
-      )
-      .mutation(async ({ input }) => {
-        const { id } = input;
-        const result = await MessageService.deleteMessage({ id });
-        return result !== null;
-      }),
-      updateMessage: publicProcedure
-        .input(
-          z.object({
-            id: z.number().min(1),
-            content: z.string().min(1).max(500),
-          })
-        )
-        .mutation(async ({ input }) => {
-          const { id, content } = input;
-          const result = await MessageService.updateMessage({ id, message: { content } });
-          return result !== null;
-        }),
+  deleteMessage: publicProcedure
+    .input(
+      z.object({
+        id: z.number().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { id } = input;
+      const result = await MessageService.deleteMessage({ id });
+      return result !== null;
+    }),
+  updateMessage: publicProcedure
+    .input(
+      z.object({
+        id: z.number().min(1),
+        content: z.string().min(1).max(500),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { id, content } = input;
+      const result = await MessageService.updateMessage({
+        id,
+        message: { content },
+      });
+      return result !== null;
+    }),
 });
-
-const appRouter = router({
-  user: userRouter,
-  chat: chatRouter,
-  message: messageRouter,
-});
-
-export type AppRouter = typeof appRouter;
-
-export default appRouter;

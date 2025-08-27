@@ -18,6 +18,7 @@ export default class MessageService {
         return await prisma.message.create({
           data: {
             content: message.content,
+            replyMessageId:message.replyMessageId,
             author: {
               connect: {
                 id: message.authorId,
@@ -59,6 +60,7 @@ export default class MessageService {
       return await prisma.message.create({
         data: {
           content: message.content,
+          replyMessageId:message.replyMessageId,
           author: {
             connect: {
               id: message.authorId,

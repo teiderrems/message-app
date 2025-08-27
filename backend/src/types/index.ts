@@ -33,6 +33,7 @@ type MessageDetail = {
   content: string | null;
   createdAt: Date;
   isViewed: boolean;
+  replyMessageId?:number|null;
   attachments: {
     id: number;
   }[];
@@ -49,12 +50,14 @@ type MessageDetail = {
 type MessageDetailDto = {
   id: number;
   content: string | null;
-  createdAt: Date;
+  createdAt: string;
   isViewed: boolean;
+  replyMessageId?:number|null;
   attachments?: string[];
   author: {
     id: number;
     username: string | null;
+    email: string | null;
     avatar?: string;
   };
 };
@@ -122,44 +125,84 @@ type LoginDetailDto = {
   phone: string | null;
   firstname: string | null;
   lastname: string | null;
-  updatedAt: Date;
-  createdAt: Date;
+  updatedAt: string;
+  createdAt: string;
   avatar?: string;
 };
 
-type UserDetail={
-    Profil: {
-        id: number;
-    } | null;
+type UserDetail = {
+  Profil: {
     id: number;
-    email: string | null;
-    phone: string | null;
-    username: string | null;
-    firstname: string | null;
-    lastname: string | null;
-    isOnline: boolean;
-    updatedAt: Date;
-    createdAt: Date;
-}
+  } | null;
+  id: number;
+  email: string | null;
+  phone: string | null;
+  username: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  isOnline: boolean;
+  updatedAt: Date;
+  createdAt: Date;
+};
 
-type UserDetailDto={
-    avatar?: string;
-    id: number;
-    email: string | null;
-    phone: string | null;
-    username: string | null;
-    isOnline: boolean;
-    firstname: string | null;
-    lastname: string | null;
-    updatedAt: Date;
-    createdAt: Date;
-}
+type UserDetailDto = {
+  avatar?: string;
+  id: number;
+  email: string | null;
+  phone: string | null;
+  username: string | null;
+  isOnline: boolean;
+  firstname: string | null;
+  lastname: string | null;
+  updatedAt: string;
+  createdAt: string;
+};
 
 type HistoryChatItem = {
   id: number;
   description: string | null;
   avatar?: string;
+  updatedAt: string;
+};
+
+type ChatItemDetail = {
+  messages: {
+    isViewed: boolean;
+    author: {
+      id: number;
+      username: string | null;
+      email: string | null;
+      Profil: {
+        id: number;
+      } | null;
+    };
+  }[];
+} & {
+  id: number;
+  description: string | null;
+  authorId: number;
   updatedAt: Date;
+  createdAt: Date;
+};
+
+type ChatItemDetailDto = {
+  id: number;
+  description: string | null;
+  authorId: number;
+  updatedAt: string;
+  createdAt: string;
+  title: string | null;
+  isRead?: boolean;
+  avatar?: string;
+};
+
+type SearchUserDto = {
+  id: number;
+  email: string | null;
+  username: string | null;
+  createdAt: Date;
+  avatar: string;
+  isOnline:boolean;
 };
 
 export type {
@@ -176,5 +219,8 @@ export type {
   UserDetail,
   UserDetailDto,
   HistoryChatItem,
-  DestinatorDto
+  DestinatorDto,
+  ChatItemDetail,
+  ChatItemDetailDto,
+  SearchUserDto
 };

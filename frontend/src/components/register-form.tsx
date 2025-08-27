@@ -15,7 +15,7 @@ import {
 } from "./ui/form";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import useLocalStorage from "@/hooks/use-local-storage";
 

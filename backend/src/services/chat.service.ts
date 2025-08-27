@@ -11,6 +11,28 @@ export default class ChatService {
             { UserChat: { some: { userId: id } } }
           ]
         },
+        include:{
+          messages:{
+            select:{
+              isViewed:true,
+              author:{
+                select:{
+                  id:true,
+                  username:true,
+                  email:true,
+                  Profil:{
+                    select:{
+                      id:true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        orderBy:{
+          updatedAt:'desc'
+        }
       });
     } catch (error) {
       console.error(error);
@@ -58,6 +80,9 @@ export default class ChatService {
                 },
               },
             },
+            orderBy:{
+              createdAt:'asc'
+            }
           },
         },
       });
@@ -103,7 +128,7 @@ export default class ChatService {
     }
   }
 
-  static async addChat({ chat }: { chat: Partial<Chat> }) {
+  static async addChat({ chat,destinatorId }: { chat: Partial<Chat>;destinatorId:number }) {
     try {
       return await prisma.chat.create({
         data: {
@@ -113,6 +138,18 @@ export default class ChatService {
               id: chat.authorId,
             },
           },
+          UserChat:{
+            createMany:{
+              data:[
+                {
+                  userId:chat.authorId!,
+                },
+                {
+                  userId:destinatorId
+                }
+              ]
+            }
+          }
         },
         select: {
           id: true,

@@ -16,7 +16,7 @@ import {
 } from "./ui/form";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/lib/trpc";
 import useLocalStorage from "@/hooks/use-local-storage";
 
 const loginFormSchema = z.object({

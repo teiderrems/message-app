@@ -4,6 +4,8 @@ import { v4 } from "uuid";
 import {
   ChatDetail,
   ChatDetailDto,
+  ChatItemDetail,
+  ChatItemDetailDto,
   MessageDetail,
   MessageDetailDto,
   UserDetail,
@@ -102,14 +104,16 @@ const convertMessageDetailToMessageDetailDto = (
   return {
     id: message.id,
     content: message.content,
-    createdAt: message.createdAt,
+    createdAt: message.createdAt.toLocaleString('fr-FR'),
     isViewed: message.isViewed,
+    replyMessageId:message.replyMessageId,
     attachments: message.attachments.map(
       (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}`
     ),
     author: {
       id: message.author.id,
       username: message.author.username,
+      email:message.author.email,
       avatar: message.author.Profil?.id
         ? `${protocol}://${host}/api/avatars/${message.author.Profil.id}`
         : getAvatar(message.author.email || "guest@gmail.com"),
@@ -154,8 +158,9 @@ const convertUserFriendDetailToUserFriendDetailDto = (
 };
 
 const  getAvatar=(email:string)=>{
+  if(!email) return 'U';
   const array= email.split("@")[0].split(".");
-  if(array.length===1){
+  if( array && array.length>0){
     return array[0].substring(0, 2).toLocaleUpperCase();
   }
   else{
@@ -178,8 +183,35 @@ const convertUserDetailToUserDetailDto=(protocol: string, host: string, user: Us
     username: user.username,
     firstname: user.firstname,
     lastname: user.lastname,
-    updatedAt: user.updatedAt,
-    createdAt: user.createdAt,
+    updatedAt: user.updatedAt.toLocaleString('fr-FR'),
+    createdAt: user.createdAt.toLocaleString('fr-FR'),
+  };
+};
+
+const convertChatItemDetailToChatItemDetailDto = (
+  protocol: string,
+  host: string,
+  chatItem: ChatItemDetail,
+  userId: number
+): ChatItemDetailDto => {
+  const destinator = chatItem.messages.find((message) => message.author.id !== userId)?.author;
+  const last_message=chatItem.messages.at(-1);
+  let avatar = "";
+  if (destinator?.Profil?.id) {
+    avatar = `${protocol}://${host}/api/avatars/${destinator.Profil.id}`;
+  } else {
+    avatar = getAvatar(destinator?.email || "guest@gmail.com");
+  }
+
+  return {
+    id: chatItem.id,
+    description: chatItem.description,
+    authorId: chatItem.authorId,
+    updatedAt: chatItem.updatedAt.toString(),
+    createdAt: chatItem.createdAt.toString(),
+    title: destinator?.username || destinator?.email?.split('@')[0] || "Unknown",
+    isRead:last_message?.isViewed,
+    avatar: avatar,
   };
 };
 
@@ -191,5 +223,7 @@ export {
   setPassword,
   convertUserFriendDetailToUserFriendDetailDto,
   convertUserFriendOfDetailToUserFriendDetailDto,
-  convertUserDetailToUserDetailDto
+  convertUserDetailToUserDetailDto,
+  convertChatItemDetailToChatItemDetailDto,
+  getAvatar
 };

@@ -116,6 +116,68 @@ export default class UserService {
     }
   }
 
+
+  static async searchUserByQuery(query:string){
+    try {
+
+      const where={
+        OR:[
+          {
+            email:{
+              contains:query
+            }
+          },
+          {
+            username:{
+              contains:query
+            }
+          },
+          {
+            phone:{
+              contains:query
+            }
+          },
+          {
+            firstname:{
+              contains:query
+            }
+          },
+          {
+            lastname:{
+              contains:query
+            }
+          }
+        ]
+      }
+      
+      return await prisma.user.findMany({
+        where,
+        orderBy:{
+          id:'asc'
+        },
+        select:{
+          id:true,
+          username:true,
+          email:true,
+          isOnline:true,
+          createdAt:true,
+          Profil:{
+            select:{
+              id:true
+            }
+          }
+        }
+      })
+
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
+
   static async sendFriendRequest({
     userId,
     friendId,

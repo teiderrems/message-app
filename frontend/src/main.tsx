@@ -5,7 +5,7 @@ import "./index.css";
 import App from "@/App.tsx";
 import AppLayout from "@/pages/layout.tsx";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/trpc/client";
+import { queryClient } from "@/lib/trpc";
 import LoginPage from "@/pages/auth-login";
 import RegisterPage from "@/pages/auth-register";
 import ChatPage from "./pages/chat-page";
