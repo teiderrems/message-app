@@ -35,7 +35,9 @@ function ChatForm(props: Props) {
   const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement | HTMLButtonElement>) => {
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement | HTMLButtonElement>
+  ) => {
     e.preventDefault();
     setIsVoiceRecorder(false);
     onSendMessage(message, selectedFiles);
@@ -336,15 +338,12 @@ function ChatForm(props: Props) {
         Glissez-déposez des fichiers ici ou cliquez sur l'icône pour ajouter
       </p>
       {showEmojiPicker && (
-        <>
-          <div className="absolute bottom-full right-0 bg-gray-500"></div>
-          <div className="absolute bottom-full flex justify-center mb-2 left-0 z-50">
-            <EmojiPicker
-              setMessage={setMessage}
-              onClose={() => setShowEmojiPicker(false)}
-            />
-          </div>
-        </>
+        <div className="absolute bottom-full flex justify-center mb-2 left-0 z-50">
+          <EmojiPicker
+            setMessage={setMessage}
+            onClose={() => setShowEmojiPicker(false)}
+          />
+        </div>
       )}
     </form>
   );

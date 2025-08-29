@@ -82,7 +82,7 @@ const MessageBubble = ({
             }`}
           >
             {/* Dropdown menu */}
-            <SidebarMenu>
+            {(message.content==='audio' || message.content?.length===0) && <SidebarMenu>
               <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -130,7 +130,7 @@ const MessageBubble = ({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </SidebarMenuItem>
-            </SidebarMenu>
+            </SidebarMenu>}
 
             {message.attachments.map((attachment, index) => (
               <Fragment key={index}>{getComponent(attachment)}</Fragment>
@@ -138,7 +138,7 @@ const MessageBubble = ({
           </div>
         )}
         {/* Message content */}
-        {message.content !== "audio" && (
+        {message.content !== "audio" && message.content?.length!==0 && (
           <div
             className={`px-1 py-2 min-w-12 max-w-full z-0 rounded-md relative ${
               isMe
