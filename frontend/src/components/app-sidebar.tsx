@@ -42,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="flex items-center justify-between p-4 border-b border-gray-200 bg-green-600 text-white">
+      <SidebarHeader className="flex items-center justify-between p-4 w-full border-b border-gray-200 bg-green-600 text-white">
          <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

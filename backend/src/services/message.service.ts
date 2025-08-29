@@ -39,6 +39,7 @@ export default class MessageService {
             attachments: {
               select: {
                 id: true,
+                mimetype:true
               },
             },
             author: {
@@ -76,6 +77,7 @@ export default class MessageService {
           attachments: {
             select: {
               id: true,
+              mimetype:true
             },
           },
           author: {
@@ -86,6 +88,7 @@ export default class MessageService {
               Profil: {
                 select: {
                   id: true,
+                  mimetype:true
                 },
               },
             },
@@ -144,6 +147,7 @@ export default class MessageService {
           attachments: {
             select: {
               id: true,
+              mimetype:true
             },
           },
           author: {
@@ -154,6 +158,7 @@ export default class MessageService {
               Profil: {
                 select: {
                   id: true,
+                  mimetype:true
                 },
               },
             },

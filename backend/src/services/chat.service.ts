@@ -5,34 +5,44 @@ export default class ChatService {
   static async getChatsByUserId(id: number) {
     try {
       return await prisma.chat.findMany({
-        where: { 
-          OR:[
-            { authorId: id },
-            { UserChat: { some: { userId: id } } }
-          ]
-        },
-        include:{
-          messages:{
-            select:{
-              isViewed:true,
-              author:{
-                select:{
-                  id:true,
-                  username:true,
-                  email:true,
-                  Profil:{
-                    select:{
-                      id:true
-                    }
-                  }
+        where: {
+          AND: [
+            {
+              OR: [{ authorId: id }, { UserChat: { some: { userId: id } } }],
+            },
+            {
+              UserChat:{
+                some:{
+                  deactivated:false,
+                  userId:id
                 }
               }
             }
-          }
+          ],
         },
-        orderBy:{
-          updatedAt:'desc'
-        }
+        include: {
+          messages: {
+            select: {
+              isViewed: true,
+              author: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  Profil: {
+                    select: {
+                      id: true,
+                      mimetype:true
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
       });
     } catch (error) {
       console.error(error);
@@ -56,6 +66,7 @@ export default class ChatService {
               Profil: {
                 select: {
                   id: true,
+                  mimetype:true
                 },
               },
             },
@@ -65,6 +76,7 @@ export default class ChatService {
               attachments: {
                 select: {
                   id: true,
+                  mimetype:true
                 },
               },
               author: {
@@ -75,14 +87,15 @@ export default class ChatService {
                   Profil: {
                     select: {
                       id: true,
+                      mimetype:true
                     },
                   },
                 },
               },
             },
-            orderBy:{
-              createdAt:'asc'
-            }
+            orderBy: {
+              createdAt: "asc",
+            },
           },
         },
       });
@@ -128,7 +141,13 @@ export default class ChatService {
     }
   }
 
-  static async addChat({ chat,destinatorId }: { chat: Partial<Chat>;destinatorId:number }) {
+  static async addChat({
+    chat,
+    destinatorId,
+  }: {
+    chat: Partial<Chat>;
+    destinatorId: number;
+  }) {
     try {
       return await prisma.chat.create({
         data: {
@@ -138,18 +157,18 @@ export default class ChatService {
               id: chat.authorId,
             },
           },
-          UserChat:{
-            createMany:{
-              data:[
+          UserChat: {
+            createMany: {
+              data: [
                 {
-                  userId:chat.authorId!,
+                  userId: chat.authorId!,
                 },
                 {
-                  userId:destinatorId
-                }
-              ]
-            }
-          }
+                  userId: destinatorId,
+                },
+              ],
+            },
+          },
         },
         select: {
           id: true,
@@ -209,6 +228,38 @@ export default class ChatService {
       throw error;
     }
   }
+  
+  static async deactivatedChat({ id,userId }: { id: number,userId:number }): Promise<boolean> {
+    try {
+      const msg = await prisma.chat.findUniqueOrThrow({
+        where: { id },
+        select: { id: true },
+      });
+      if (msg) {
+        return (
+          (await prisma.userChat.update({
+            where: { userId_chatId:{
+              userId,
+              chatId:id
+            }},
+            data:{
+              deactivated:true
+            },
+            select: {
+              id: true,
+            },
+          })) !== null
+        );
+      }
+      return false;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+  }
 
   static async isUserInChat({
     userId,
@@ -219,11 +270,8 @@ export default class ChatService {
   }) {
     try {
       const chat = await prisma.userChat.findMany({
-        where: { 
-          AND:[
-            { userId: userId },
-            { chatId: chatId }  
-          ]
+        where: {
+          AND: [{ userId: userId }, { chatId: chatId }],
         },
         select: {
           id: true,

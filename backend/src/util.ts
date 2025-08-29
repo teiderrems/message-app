@@ -89,7 +89,7 @@ const convertChatDetailToChatDetailDto = (
       id: destinator?.id,
       email: destinator?.email,
       avatar: destinator?.Profil?.id
-        ? `${protocol}://${host}/api/avatars/${destinator.Profil.id}`
+        ? `${protocol}://${host}/api/avatars/${destinator.Profil.id}?mimetype=${destinator.Profil.mimetype}`
         : getAvatar(destinator?.email || "guest@gmail.com"),
     },
     messages: chat.messages.map((message) => convertMessageDetailToMessageDetailDto(protocol, host, message)),
@@ -108,14 +108,14 @@ const convertMessageDetailToMessageDetailDto = (
     isViewed: message.isViewed,
     replyMessageId:message.replyMessageId,
     attachments: message.attachments.map(
-      (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}`
+      (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}?mimetype=${attachment.mimetype}`
     ),
     author: {
       id: message.author.id,
       username: message.author.username,
       email:message.author.email,
       avatar: message.author.Profil?.id
-        ? `${protocol}://${host}/api/avatars/${message.author.Profil.id}`
+        ? `${protocol}://${host}/api/avatars/${message.author.Profil.id}?mimetype=${message.author.Profil.mimetype}`
         : getAvatar(message.author.email || "guest@gmail.com"),
     },
   };
@@ -134,7 +134,7 @@ const convertUserFriendOfDetailToUserFriendDetailDto = (
     id: friend.id,
     username: friend.user.username,
     avatar: friend.user.Profil?.id
-      ? `${protocol}://${host}/api/avatars/${friend.user.Profil.id}`
+      ? `${protocol}://${host}/api/avatars/${friend.user.Profil.id}?mimetype=${friend.user.Profil.mimetype}`
       : getAvatar(friend.user.email || "guest@gmail.com"),
   }));
 };
@@ -157,16 +157,24 @@ const convertUserFriendDetailToUserFriendDetailDto = (
   }));
 };
 
-const  getAvatar=(email:string)=>{
-  if(!email) return 'U';
-  const array= email.split("@")[0].split(".");
-  if( array && array.length>0){
-    return array[0].substring(0, 2).toLocaleUpperCase();
+const getAvatar = (email: string): string => {
+  if (!email || !email.includes("@")) return "U";
+
+  const username = email.split("@")[0].trim();
+  if (!username) return "U";
+
+  // Découper par . ou -
+  const parts = username.split(/[.\-_]/).filter(Boolean);
+
+  if (parts.length === 1) {
+    // Si un seul mot : prendre les 2 premières lettres
+    return parts[0].substring(0, 2).toUpperCase();
   }
-  else{
-    return array[0].substring(0, 1).toLocaleUpperCase()+array[1].substring(0, 1).toLocaleUpperCase();
-  }
-}
+
+  // Si plusieurs parties : prendre la première lettre des deux premiers segments
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
 
 const convertUserDetailToUserDetailDto=(protocol: string, host: string, user: UserDetail): UserDetailDto | null => {
   if (!user) {

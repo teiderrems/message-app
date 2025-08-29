@@ -95,6 +95,7 @@ model UserChat {
   id        Int      @id @default(autoincrement())
   userId    Int
   chatId    Int
+  deactivated    Boolean?     @default(false)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   updatedAt DateTime @updatedAt

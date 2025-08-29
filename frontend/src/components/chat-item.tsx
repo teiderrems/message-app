@@ -4,25 +4,28 @@ import { useEffect, useState } from "react";
 import socket from "@/util";
 import { StatusMessage } from "./message-bubble";
 import { Button } from "./ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarMenu, SidebarMenuItem } from "./ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useMutation } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc";
 
 interface Props {
   chat: ChatItemDetailDto;
   isActive: boolean;
   userId: number;
-  onDelete?: (chatId: number) => void;
+  refetch: () => Promise<void>;
 }
 
 function ChatItem(props: Props) {
-  const { chat, isActive, userId } = props;
+  const { chat, isActive, userId, refetch } = props;
   const navigate = useNavigate();
 
   const [isTyping, setIsTyping] = useState(false);
@@ -70,6 +73,10 @@ function ChatItem(props: Props) {
     });
   }
 
+  const { mutateAsync } = useMutation(
+    trpc.chat.deactivatedChat.mutationOptions()
+  );
+
   useEffect(() => {
     socket.on(
       "user_typing_chat",
@@ -87,67 +94,87 @@ function ChatItem(props: Props) {
         }
       }
     );
+
     return () => {
       socket.off("user_typing_chat");
     };
-  }, [userId, isTyping]);
+  }, [chat.id, userId]);
 
-  // function handleDelete(): void {
-  //   if (onDelete) {
-  //     onDelete(chat.id);
-  //   }
-  // }
+  const isMobile = useIsMobile();
+
   return (
     <div
       onClick={() => navigate(`/chats/${chat.id}`)}
       key={chat.id}
-      className={`h-14 hover:border text-black hover:border-gray-300 hover:cursor-pointer rounded-md flex px-1 py-3 items-center space-x-1 ${
+      className={`h-14 hover:border hover:bg-gray-200 text-black hover:border-gray-300 hover:cursor-pointer rounded-md flex px-1 py-3 items-center space-x-1 ${
         isActive ? "bg-gray-200" : ""
       }`}
     >
-      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+      <div className="w-10 min-w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
         <span className="text-lg font-semibold">{chat.avatar}</span>
       </div>
       <div className="flex flex-col text-sm grow">
-        <span className="flex justify-between">
+        <div className="flex justify-between w-full">
           <span className="font-bold self-start">{chat.title}</span>
           <span className="text-gray-400">
             {formatChatDate(chat.createdAt)}
           </span>
-        </span>
-        <div className=" items-center relative">
+        </div>
+        <div className="flex items-center max-w-50">
           {isTyping ? (
             <span className="text-xs text-gray-300 ml-1">
               Est en train d'écrire...
             </span>
           ) : (
-            <span className="flex space-x-1 items-center">
+            <div className="flex space-x-1 z-0 truncate w-full relative items-center">
               <span>
                 <StatusMessage isViewed={chat.isRead || false} />
               </span>
-              <span className="truncate self-start">{chat.description}</span>
-            </span>
+              <span className="text-gray-700 truncate flex-1">
+                {chat.description}
+              </span>
+              <SidebarMenu className="absolute right-0 -translate-y-1.5">
+                <SidebarMenuItem>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant={"link"}
+                        onClick={(e) => e.stopPropagation()}
+                        asChild
+                        size="icon"
+                        className={`hover:cursor-pointer hover:border-0 ${
+                          isMobile ? "text-white" : "text-gray-700"
+                        } absolute right-0 opacity-0 translate-x-1 hover:opacity-100 transition-all duration-200`}
+                      >
+                        <ChevronDown className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg shadow-lg"
+                      side={isMobile ? "bottom" : "right"}
+                      align="end"
+                      sideOffset={4}
+                    >
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await mutateAsync({ chatId: chat.id, userId });
+                            await refetch();
+                          }}
+                          className="hover:cursor-pointer focus:bg-red-50 focus:text-red-600"
+                        >
+                          <Trash2 className="w-5 h-5 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </div>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="bottom-0 right-0 absolute opacity-0 group-hover:opacity-100 transition"
-                asChild
-                variant={"ghost"}
-                size={"icon"}
-              >
-                <ChevronDown className="!size-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Subscription</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </div>

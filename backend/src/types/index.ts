@@ -5,6 +5,7 @@ type ChatDetail = {
     username: string | null;
     Profil: {
       id: number;
+      mimetype: string;
     } | null;
   };
   messages: MessageDetail[];
@@ -33,9 +34,10 @@ type MessageDetail = {
   content: string | null;
   createdAt: Date;
   isViewed: boolean;
-  replyMessageId?:number|null;
+  replyMessageId?: number | null;
   attachments: {
     id: number;
+    mimetype: string;
   }[];
   author: {
     id: number;
@@ -43,6 +45,7 @@ type MessageDetail = {
     email: string | null;
     Profil: {
       id: number;
+      mimetype: string;
     } | null;
   };
 };
@@ -52,7 +55,7 @@ type MessageDetailDto = {
   content: string | null;
   createdAt: string;
   isViewed: boolean;
-  replyMessageId?:number|null;
+  replyMessageId?: number | null;
   attachments?: string[];
   author: {
     id: number;
@@ -81,6 +84,7 @@ type UserFriendOfDetail = {
       username: string | null;
       Profil: {
         id: number;
+        mimetype: string;
       } | null;
     };
   }[];
@@ -95,6 +99,7 @@ type UserFriendDetail = {
       username: string | null;
       Profil: {
         id: number;
+        mimetype: string;
       } | null;
     };
   }[];
@@ -116,6 +121,7 @@ type LoginDetail = {
   createdAt: Date;
   Profil: {
     id: number;
+    mimetype: string;
   } | null;
 };
 
@@ -133,6 +139,7 @@ type LoginDetailDto = {
 type UserDetail = {
   Profil: {
     id: number;
+    mimetype: string;
   } | null;
   id: number;
   email: string | null;
@@ -174,6 +181,7 @@ type ChatItemDetail = {
       email: string | null;
       Profil: {
         id: number;
+        mimetype: string;
       } | null;
     };
   }[];
@@ -202,7 +210,7 @@ type SearchUserDto = {
   username: string | null;
   createdAt: Date;
   avatar: string;
-  isOnline:boolean;
+  isOnline: boolean;
 };
 
 export type {
@@ -222,5 +230,5 @@ export type {
   DestinatorDto,
   ChatItemDetail,
   ChatItemDetailDto,
-  SearchUserDto
+  SearchUserDto,
 };

@@ -322,6 +322,17 @@ export const chatRouter = router({
       const deleted = await ChatService.deletechat({ id: input.id });
       return deleted;
     }),
+    deactivatedChat: publicProcedure
+    .input(
+      z.object({
+        chatId: z.number().min(1),
+        userId: z.number().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const deleted = await ChatService.deactivatedChat({ id: input.chatId,userId:input.userId });
+      return deleted;
+    }),
   addUserInChat: publicProcedure
     .input(
       z.object({

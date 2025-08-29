@@ -27,6 +27,7 @@ export default class UserService {
                   Profil: {
                     select: {
                       id: true,
+                      mimetype:true
                     },
                   },
                 },
@@ -67,6 +68,7 @@ export default class UserService {
                   Profil: {
                     select: {
                       id: true,
+                      mimetype:true
                     },
                   },
                 },
@@ -163,7 +165,8 @@ export default class UserService {
           createdAt:true,
           Profil:{
             select:{
-              id:true
+              id:true,
+              mimetype:true
             }
           }
         }
@@ -228,6 +231,7 @@ export default class UserService {
                   Profil: {
                     select: {
                       id: true,
+                      mimetype:true
                     },
                   },
                 },
@@ -330,6 +334,7 @@ export default class UserService {
             Profil: {
               select: {
                 id: true,
+                mimetype:true
               },
             },
           },
@@ -341,6 +346,7 @@ export default class UserService {
           Profil: {
             select: {
               id: true,
+              mimetype:true
             },
           },
         },
@@ -469,6 +475,7 @@ export default class UserService {
           Profil: {
             select: {
               id: true,
+              mimetype:true
             },
           },
         },
