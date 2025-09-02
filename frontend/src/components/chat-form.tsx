@@ -217,39 +217,6 @@ function ChatForm(props: Props) {
       return <File className="w-8 h-8 text-gray-600" />;
     }
   };
-
-  const getFileColor = (file: File): string => {
-    const fileName = file.name.toLowerCase().trim();
-    const { type } = file;
-
-    // PDF : bleu doux et professionnel
-    if (fileName.endsWith(".pdf")) return "from-gray-500/50 to-gray-500";
-
-    // Word : bleu clair très doux
-    if (fileName.endsWith(".doc") || fileName.endsWith(".docx"))
-      return "from-blue-50 to-blue-100";
-
-    // Excel : vert tendre
-    if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx"))
-      return "from-emerald-50 to-emerald-100";
-
-    // PowerPoint : orange pastel
-    if (fileName.endsWith(".ppt") || fileName.endsWith(".pptx"))
-      return "from-amber-50 to-amber-100";
-
-    // Images : gris neutre / beige clair
-    if (type.startsWith("image/")) return "from-gray-50 to-stone-50";
-
-    // Audio : mauve très clair
-    if (type.startsWith("audio/")) return "from-purple-200 to-purple-300";
-
-    // Vidéo : rose pâle
-    if (type.startsWith("video/")) return "from-rose-200 to-rose-300";
-
-    // Autres : gris très clair
-    return "from-cyan-200 to-cyan-300";
-  };
-
   const getFileName = (fileName: string) => {
     return fileName.length > 12 ? fileName.substring(0, 12) + "..." : fileName;
   };
