@@ -37,12 +37,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-  },
-});
+
 
 app.use(helmet());
 app.use(express.json());
@@ -67,6 +62,10 @@ const corsOptions: cors.CorsOptions = {
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+
+const io = new Server(server, {
+  cors: corsOptions,
+});
 app.use(cors(corsOptions));
 
 app.use(
@@ -97,6 +96,7 @@ app.use("/api/attachments", attachmentRouter);
 app.use("/api/messages", messageRouter);
 
 const sessions = new Map<string, string>();
+const rooms:string[] = [];
 
 io.on("connection", (socket: AuthSocket) => {
   console.log("Nouvelle connexion socket:", socket.id);
@@ -143,7 +143,22 @@ io.on("connection", (socket: AuthSocket) => {
 
       // Rejoindre le salon
       await socket.join(`chat_${chatId}`);
+      if (!rooms.includes(`chat_${chatId}`)) {
+        rooms.push(`chat_${chatId}`);
+      }
       console.log(`User ${userId} a rejoint le salon chat_${chatId}`);
+
+      socket.on('user_online',({ userId,isOnline })=>{
+
+        const sessions_user=[...sessions.keys()].filter(k=>Number(k.split(':')[0])===userId);
+        const user_rooms=rooms.filter((v)=>{
+          return sessions_user.some(su=>su.includes(v.split('_')[1]!))
+        });
+
+        // console.log(sockets,sessions_user);
+        socket.to(user_rooms).emit('user_online',{ userId,isOnline });
+
+      });
 
       // ✅ Maintenant que le salon est rejoint, on peut écouter les messages
       setupChatEventListeners(socket, chatId);

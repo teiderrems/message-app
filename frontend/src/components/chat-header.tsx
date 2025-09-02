@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem, SidebarTrigger } from "@/components/ui/sidebar";
 import { MoreVertical, Search } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,8 +20,8 @@ import {
 } from "@tabler/icons-react";
 import { DestinatorDto } from "@/types";
 import socket from "@/util";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc";
+// import { useQuery } from "@tanstack/react-query";
+// import { trpc } from "@/lib/trpc";
 
 interface ChatHeaderProps {
   destinator?: DestinatorDto;
@@ -43,23 +43,23 @@ export function ChatHeader({
   const [isOnline, setIsOnline] = useState(false);
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
 
-  const { data: userStatus, isFetching } = useQuery(
-    trpc.user.getUserStatus.queryOptions(
-      { userId: destinator.id },
-      {
-        refetchOnMount: true,
-        refetchOnReconnect: true,
-        refetchOnWindowFocus: true,
-        retry: 3,
-      }
-    )
-  );
+  // const { data: userStatus, isFetching } = useQuery(
+  //   trpc.user.getUserStatus.queryOptions(
+  //     { userId: destinator.id },
+  //     {
+  //       refetchOnMount: true,
+  //       refetchOnReconnect: true,
+  //       refetchOnWindowFocus: true,
+  //       retry: 3,
+  //     }
+  //   )
+  // );
 
-  useEffect(() => {
-    if (userStatus) {
-      setIsOnline(userStatus);
-    }
-  }, [userStatus, isFetching]);
+  // useEffect(() => {
+  //   if (userStatus) {
+  //     setIsOnline(userStatus);
+  //   }
+  // }, [userStatus, isFetching]);
 
   useEffect(() => {
     socket.on(
@@ -78,6 +78,12 @@ export function ChatHeader({
       }
     );
 
+    socket.on('user_online',({ userId,isOnline }:{ userId:number,isOnline:boolean })=>{
+      if (destinator.id===userId) {
+        setIsOnline(isOnline);
+      }
+    })
+
     return () => {
       socket.off("user_typing");
     };
@@ -86,6 +92,7 @@ export function ChatHeader({
   return (
     <header className="bg-green-600 text-white px-4 py-3 flex items-center justify-between shadow-md">
       <div className="flex items-center space-x-3">
+          <SidebarTrigger className="sm:hidden" variant={'link'}/>
         <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
           <span className="text-lg font-semibold">{destinator?.avatar}</span>
         </div>

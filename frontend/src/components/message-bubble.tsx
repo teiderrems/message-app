@@ -56,11 +56,15 @@ const MessageBubble = ({
       if (array[1]?.includes("image")) {
         return <ImageDisplay initialImageUrl={attachment} />;
       } else if (array[1]?.includes("audio") || array[1]?.includes("video")) {
-        return <AudioViewer src={attachment} />;
+        const duration=Number(array[1].split('&')[1]?.split('=')[1]);
+        return <AudioViewer time={formatTime(message.createdAt)} voiceDuration={duration} isViewed={message.isViewed} sent={isMe} src={attachment} />;
       }
       return (
         <DocumentViewer
           url={attachment}
+          isViewed={message.isViewed}
+          time={formatTime(message.createdAt)}
+          sent={isMe}
           name={`attachment-${Date.now()}.${array[1]?.split("/")[1]}`}
         />
       );
@@ -91,9 +95,9 @@ const MessageBubble = ({
                       variant={"link"}
                       asChild
                       size="icon"
-                      className={`hover:cursor-pointer hover:border-0 ${
-                        isMe ? "text-white" : "text-gray-700"
-                      } absolute right-3 top-2 opacity-0 group-hover:opacity-100 transition`}
+                      className={`hover:cursor-pointer z-50 hover:border-0 ${
+                        isMe ? "text-black" : "text-gray-700"
+                      } absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition`}
                     >
                       <ChevronDown className="w-5 h-5 cursor-pointer transition" />
                     </Button>

@@ -47,7 +47,7 @@ const setPassword = (user: Partial<User>, newPassword?: string): Partial<User> =
 
 const convertFileToAttachment = (
   req: Request
-): Omit<Attachment, "id" | "createdAt" | "updatedAt" | "messageId">[] | [] => {
+): Omit<Attachment, "id" | "createdAt" | "updatedAt" | "messageId"| "size"| "duration"| "isVoice">[] | [] => {
   const files = req.files;
   if (!files || files.length === 0) {
     return [];
@@ -55,7 +55,7 @@ const convertFileToAttachment = (
 
   const attachments: Omit<
     Attachment,
-    "id" | "createdAt" | "updatedAt" | "messageId"
+    "id" | "createdAt" | "updatedAt" | "messageId"| "size"| "duration"| "isVoice"
   >[] = [];
 
   if (Array.isArray(files)) {
@@ -108,7 +108,7 @@ const convertMessageDetailToMessageDetailDto = (
     isViewed: message.isViewed,
     replyMessageId:message.replyMessageId,
     attachments: message.attachments.map(
-      (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}?mimetype=${attachment.mimetype}`
+      (attachment) => `${protocol}://${host}/api/attachments/${attachment.id}?mimetype=${attachment.mimetype}${attachment.isVoice?`&duration=${attachment.duration}`:''}`
     ),
     author: {
       id: message.author.id,

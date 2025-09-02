@@ -1,56 +1,76 @@
-"use client";
-
 import React from "react";
-import { FileText, FileSpreadsheet, FileArchive, File } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { FileText, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
+// import { Button } from "./ui/button";
+import { StatusMessage } from "./message-bubble";
+import { v4 } from 'uuid';
 
 type WhatsAppDocumentProps = {
-  name: string;        // Nom du fichier
-  size?: string;        // Taille affichée (ex: "2.3 MB")
-  url: string;         // Lien de téléchargement / ouverture
-  sent?: boolean;      // Alignement bulle
+  name: string;
+  size?: string;
+  meta?: string; // ex: "32 pages · PDF"
+  preview?: string; // bref aperçu du contenu
+  url: string;
+  sent?: boolean;
+  isViewed: boolean;
+  time?: string; // ex: "16:27"
 };
 
 const DocumentViewer: React.FC<WhatsAppDocumentProps> = ({
   name,
   size,
+  meta,
+  preview,
   url,
   sent,
+  isViewed,
+  time,
 }) => {
-  const getFileIcon = () => {
-    const ext = name.split(".").pop()?.toLowerCase();
-
-    switch (ext) {
-      case "pdf":
-        return <FileText className="text-red-500" size={28} />;
-      case "xls":
-      case "xlsx":
-      case "csv":
-        return <FileSpreadsheet className="text-green-500" size={28} />;
-      case "zip":
-      case "rar":
-        return <FileArchive className="text-yellow-500" size={28} />;
-      default:
-        return <File className="text-blue-500" size={28} />;
-    }
-  };
-
   return (
-    <div className={`flex ${sent ? "justify-end" : "justify-start"}`}>
-      <Card
-        className={`flex items-center gap-3 px-3 py-2  max-w-xs cursor-pointer
-          ${sent ? "bg-green-500 text-white" : "bg-white text-black"}`}
-        onClick={() => window.open(url, "_blank")}
-      >
-        {/* Icône du document */}
-        <div className="p-2 rounded-md bg-white/20">{getFileIcon()}</div>
-
-        {/* Infos document */}
-        <div className="flex flex-col overflow-hidden">
-          <span className="font-medium truncate max-w-[150px]">{name}</span>
-          <span className="text-xs opacity-80">{size}</span>
+    <div
+      className={cn(
+        "flex items-center gap-2 max-w-md relative rounded-2xl px-3 py-2 shadow-sm ",
+        sent ? "justify-end bg-green-500" : "justify-start bg-white"
+      )}
+    >
+      <div className={cn("relative my-2")}>
+        {/* Contenu document */}
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          // onClick={() => window.open(url, "_blank")}
+        >
+          <FileText className="text-red-500 flex-shrink-0" size={28} />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <span className="font-medium text-sm truncate">{name}</span>
+            <span className="text-xs text-gray-600 truncate">
+              {meta} {size ? `· ${size}` : ""}
+            </span>
+          </div>
+          <a
+            href={url}
+            target="_blank"
+            download={v4()} // facultatif, sinon prend le nom de l’URL
+            className="inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-200 transition"
+          >
+            <Download className="text-gray-600 w-6 h-6" />
+          </a>
         </div>
-      </Card>
+
+        {/* Aperçu du contenu */}
+        {preview && (
+          <div className="mt-2 text-xs text-gray-500 italic line-clamp-2">
+            {preview}
+          </div>
+        )}
+      </div>
+      <span className="absolute flex items-center space-x-1 right-2 bottom-0">
+        <span
+          className={`text-xs ${sent ? "text-green-400" : "text-gray-500"}`}
+        >
+          {time}
+        </span>
+        <StatusMessage isViewed={isViewed} />
+      </span>
     </div>
   );
 };

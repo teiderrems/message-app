@@ -56,6 +56,9 @@ model Attachment {
   id        Int      @id @default(autoincrement())
   mimetype  String
   data      Bytes
+  size      String?
+  duration  Int?
+  isVoice   Boolean?    @default(false)
   filename  String?
   updatedAt DateTime @updatedAt
   messageId Int

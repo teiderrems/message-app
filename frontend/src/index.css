@@ -50,6 +50,16 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -184,4 +194,3 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
-

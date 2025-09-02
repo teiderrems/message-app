@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import useScrollBottom from "@/hooks/scroll-bottom";
 
 const ChatPage = () => {
   const { id } = useParams<{ id: string }>(); // ✅ Typage correct
@@ -37,6 +38,8 @@ const ChatPage = () => {
       }
     )
   );
+
+  const scrollToBottom = useScrollBottom();
 
   const [messages, setMessages] = useState<MessageDetailDto[]>([]);
   const [searchMessages, setSearchMessages] = useState<MessageDetailDto[]>([]);
@@ -148,6 +151,7 @@ const ChatPage = () => {
         isTyping: boolean;
         chatId: number;
       }) => {
+        scrollToBottom();
         if (currentChatId === chatId) {
           setShowTypingIndicator(isTyping);
         }
@@ -168,7 +172,11 @@ const ChatPage = () => {
     };
   }, [chatId, isFetched]); // ✅ Dépendances correctes
 
-  const getFileData = async (files?: File[] | null) => {
+  const getFileData = async (
+    isVoice?: boolean,
+    duration?: number,
+    files?: File[] | null
+  ) => {
     if (!files || files.length === 0) return;
 
     const fileReaders = files.map((file): Promise<Partial<Attachment>> => {
@@ -180,6 +188,8 @@ const ChatPage = () => {
             resolve({
               filename: file.name,
               data: new Uint8Array(arrayBuffer),
+              isVoice,
+              duration:duration??0,
               mimetype: file.type,
             });
           }
@@ -190,14 +200,22 @@ const ChatPage = () => {
     return await Promise.all(fileReaders);
   };
 
-  const sendMessage = async (input: string, files?: File[] | null) => {
+  const sendMessage = async (
+    input: string,
+    files?: File[] | null,
+    duration?: number
+  ) => {
     if (!input.trim() && !files) return;
 
     const attachments: Partial<Attachment>[] = [];
 
     if (files) {
       try {
-        const filesData = await getFileData(files);
+        const filesData = await getFileData(
+          input.trim() === "audio",
+          duration ||0,
+          files
+        );
         filesData?.forEach((fileData) => {
           attachments.push(fileData);
         });

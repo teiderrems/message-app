@@ -1,4 +1,16 @@
-import { Mic, Paperclip, SendHorizontal, Smile, X } from "lucide-react";
+import {
+  Mic,
+  Paperclip,
+  SendHorizontal,
+  Smile,
+  X,
+  Image as ImageIcon,
+  FileAudio,
+  FileVideo,
+  FileText,
+  FileSpreadsheet,
+  File,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useRef, useState } from "react";
@@ -9,7 +21,11 @@ import EmojiPicker from "./emoji-picker";
 import VoiceRecorder from "./audio-record";
 
 interface Props {
-  onSendMessage: (message: string, attachments?: File[] | null) => void;
+  onSendMessage: (
+    message: string,
+    attachments?: File[] | null,
+    duration?: number
+  ) => void;
   userId: number;
   chatId: number;
   destinatorId: number;
@@ -34,6 +50,7 @@ function ChatForm(props: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [filePreviews, setFilePreviews] = useState<Record<number, string>>({});
 
   const handleSubmit = (
     e: React.FormEvent<HTMLFormElement | HTMLButtonElement>
@@ -44,6 +61,7 @@ function ChatForm(props: Props) {
     setMessage("");
     setShowEmojiPicker(false);
     setSelectedFiles(null);
+    setFilePreviews({});
   };
 
   const handleFileInputClick = () => {
@@ -69,6 +87,24 @@ function ChatForm(props: Props) {
         setSelectedFiles((prev) =>
           prev ? [...prev, ...validFiles] : validFiles
         );
+
+        // Générer des prévisualisations pour les fichiers
+        validFiles.forEach((file, index) => {
+          const fileIndex = selectedFiles
+            ? selectedFiles.length + index
+            : index;
+
+          if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              setFilePreviews((prev) => ({
+                ...prev,
+                [fileIndex]: e.target?.result as string,
+              }));
+            };
+            reader.readAsDataURL(file);
+          }
+        });
       }
     }
   };
@@ -107,6 +143,24 @@ function ChatForm(props: Props) {
         setSelectedFiles((prev) =>
           prev ? [...prev, ...validFiles] : validFiles
         );
+
+        // Générer des prévisualisations pour les fichiers image
+        validFiles.forEach((file, index) => {
+          const fileIndex = selectedFiles
+            ? selectedFiles.length + index
+            : index;
+
+          if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              setFilePreviews((prev) => ({
+                ...prev,
+                [fileIndex]: e.target?.result as string,
+              }));
+            };
+            reader.readAsDataURL(file);
+          }
+        });
       }
     }
   };
@@ -115,6 +169,23 @@ function ChatForm(props: Props) {
     setSelectedFiles(
       (prev) => prev?.filter((_, index) => index !== indexToRemove) || null
     );
+
+    // Mettre à jour les prévisualisations
+    setFilePreviews((prev) => {
+      const newPreviews = { ...prev };
+      Object.keys(newPreviews).forEach((key) => {
+        const numKey = parseInt(key);
+        if (numKey === indexToRemove) {
+          delete newPreviews[numKey];
+        } else if (numKey > indexToRemove) {
+          if (typeof newPreviews[numKey] === "string") {
+            newPreviews[numKey - 1] = newPreviews[numKey] as string;
+          }
+          delete newPreviews[numKey];
+        }
+      });
+      return newPreviews;
+    });
   };
 
   const formatFileSize = (bytes: number) => {
@@ -124,6 +195,65 @@ function ChatForm(props: Props) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  const getFileIcon = (file: File) => {
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith(".pdf")) {
+      return <FileText className="w-8 h-8 text-red-600" />;
+    } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+      return <FileText className="w-8 h-8 text-blue-600" />;
+    } else if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx")) {
+      return <FileSpreadsheet className="w-8 h-8 text-green-600" />;
+    } else if (fileName.endsWith(".ppt") || fileName.endsWith(".pptx")) {
+      return <File className="w-8 h-8 text-orange-600" />;
+    } else if (file.type.startsWith("image/")) {
+      return <ImageIcon className="w-8 h-8 text-gray-600" />;
+    } else if (file.type.startsWith("audio/")) {
+      return <FileAudio className="w-8 h-8 text-purple-600" />;
+    } else if (file.type.startsWith("video/")) {
+      return <FileVideo className="w-8 h-8 text-red-600" />;
+    } else {
+      return <File className="w-8 h-8 text-gray-600" />;
+    }
+  };
+
+  const getFileColor = (file: File): string => {
+    const fileName = file.name.toLowerCase().trim();
+    const { type } = file;
+
+    // PDF : bleu doux et professionnel
+    if (fileName.endsWith(".pdf")) return "from-gray-500/50 to-gray-500";
+
+    // Word : bleu clair très doux
+    if (fileName.endsWith(".doc") || fileName.endsWith(".docx"))
+      return "from-blue-50 to-blue-100";
+
+    // Excel : vert tendre
+    if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx"))
+      return "from-emerald-50 to-emerald-100";
+
+    // PowerPoint : orange pastel
+    if (fileName.endsWith(".ppt") || fileName.endsWith(".pptx"))
+      return "from-amber-50 to-amber-100";
+
+    // Images : gris neutre / beige clair
+    if (type.startsWith("image/")) return "from-gray-50 to-stone-50";
+
+    // Audio : mauve très clair
+    if (type.startsWith("audio/")) return "from-purple-200 to-purple-300";
+
+    // Vidéo : rose pâle
+    if (type.startsWith("video/")) return "from-rose-200 to-rose-300";
+
+    // Autres : gris très clair
+    return "from-cyan-200 to-cyan-300";
+  };
+
+  const getFileName = (fileName: string) => {
+    return fileName.length > 12 ? fileName.substring(0, 12) + "..." : fileName;
+  };
+
   const [typingTimeout, setTypingTimeout] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -153,7 +283,7 @@ function ChatForm(props: Props) {
 
   return (
     <form
-      className="bg-white border-t border-gray-200 px-4 py-2 relative"
+      className="bg-white border-t border-gray-200 px-4 pt-2 pb-3 relative"
       onSubmit={handleSubmit}
       onKeyDown={(e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -164,43 +294,206 @@ function ChatForm(props: Props) {
     >
       {/* Aperçu des fichiers sélectionnés */}
       {selectedFiles && selectedFiles.length > 0 && (
-        <div className="mb-2 p-2 bg-gray-50 rounded-lg">
-          <div className="flex flex-wrap gap-2">
-            {selectedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm border"
-              >
-                <div className="flex-shrink-0">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="w-10 h-10 object-cover rounded-md"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-900 truncate">
-                    {file.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+        <div className="mb-2 max-h-40 overflow-y-auto">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+            {selectedFiles.map((file, index) => {
+              const mimeType = file.type;
+              const fileName = file.name.toLowerCase();
+
+              if (mimeType.startsWith("image/")) {
+                return (
+                  <div key={index} className="relative group">
+                    <img
+                      src={filePreviews[index] || URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="w-full h-24 object-cover rounded-lg"
+                      onLoad={() => {
+                        // Révoquer l'URL après chargement pour éviter les fuites de mémoire
+                        URL.revokeObjectURL(filePreviews[index] || "");
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else if (mimeType.startsWith("video/")) {
+                return (
+                  <div key={index} className="relative group">
+                    <div className="relative">
+                      <video
+                        src={URL.createObjectURL(file)}
+                        className="w-full h-24 object-cover rounded-lg"
+                        controls={false}
+                      />
+                      <div className="absolute inset-0 bg-opacity-30 flex items-center justify-center rounded-lg">
+                        <div className="w-12 h-12 bg-white bg-opacity-50 rounded-full flex items-center justify-center">
+                          <FileVideo className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else if (mimeType.startsWith("audio/")) {
+                return (
+                  <div key={index} className="relative group">
+                    <div className="w-full h-24 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <FileAudio className="w-8 h-8 text-white mx-auto mb-1" />
+                        <p className="text-white text-xs font-medium truncate px-2">
+                          {getFileName(file.name)}
+                        </p>
+                        <p className="text-white text-xs opacity-80">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else if (fileName.endsWith(".pdf")) {
+                return (
+                  <div key={index} className="relative group">
+                    <div
+                      className={`w-full h-24 bg-gradient-to-br from-gray-500/50 to-gray-500 rounded-lg flex items-center justify-center`}
+                    >
+                      <div className="text-center">
+                        {getFileIcon(file)}
+                        <p className="text-white text-xs font-medium truncate px-2 mt-1">
+                          {getFileName(file.name)}
+                        </p>
+                        <p className="text-white text-xs opacity-80">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else if (
+                fileName.endsWith(".doc") ||
+                fileName.endsWith(".docx")
+              ) {
+                return (
+                  <div key={index} className="relative group">
+                    <div
+                      className={`w-full h-24 bg-gradient-to-br from-gray-500/50 to-gray-500 rounded-lg flex items-center justify-center`}
+                    >
+                      <div className="text-center">
+                        {getFileIcon(file)}
+                        <p className="text-white text-xs font-medium truncate px-2 mt-1">
+                          {getFileName(file.name)}
+                        </p>
+                        <p className="text-white text-xs opacity-80">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else if (
+                fileName.endsWith(".xls") ||
+                fileName.endsWith(".xlsx")
+              ) {
+                return (
+                  <div key={index} className="relative group">
+                    <div
+                      className={`w-full h-24 bg-gradient-to-br from-gray-500/50 to-gray-500 rounded-lg flex items-center justify-center`}
+                    >
+                      <div className="text-center">
+                        {getFileIcon(file)}
+                        <p className="text-white text-xs font-medium truncate px-2 mt-1">
+                          {getFileName(file.name)}
+                        </p>
+                        <p className="text-white text-xs opacity-80">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-white hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={index} className="relative group">
+                    <div className="w-full h-24 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                      <div className="text-center">
+                        {getFileIcon(file)}
+                        <p className="text-gray-700 text-xs font-medium truncate px-2 mt-1">
+                          {getFileName(file.name)}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+            })}
           </div>
         </div>
       )}
 
       {messageToReply && (
-        <div className="bg-gray-100 p-2 border-t border-gray-200">
+        <div className="bg-gray-100 p-2 border-t border-gray-200 mb-2">
           <div className="flex items-start justify-between bg-white p-2 rounded-md">
             <div className="flex items-start">
               <div
@@ -246,7 +539,7 @@ function ChatForm(props: Props) {
       )}
 
       <div
-        className={`flex items-center space-x-2 mx-auto p-1 bg-white rounded-full border-2 transition-colors ${
+        className={`flex items-center space-x-2 mx-auto p-1 bg-white rounded-full border transition-colors ${
           isDragging
             ? "border-green-500 bg-green-50"
             : "border-gray-200 hover:border-gray-300"
@@ -270,18 +563,18 @@ function ChatForm(props: Props) {
               asChild
               size={"icon"}
               onClick={handleFileInputClick}
-              className="hover:cursor-pointer border-0 flex bg-white text-gray-600 hover:bg-gray-400 items-center justify-center rounded-full hover:text-white transition"
+              className="hover:cursor-pointer border-0 flex bg-white text-gray-600 hover:bg-gray-100 items-center justify-center rounded-full hover:text-green-600 transition-all duration-200"
             >
-              <Paperclip className="h-8 w-8" />
+              <Paperclip className="h-6 w-6" />
             </Button>
 
             <Button
               asChild
               size={"icon"}
-              className="hover:cursor-pointer border-0 flex bg-white text-gray-600 hover:bg-gray-400 items-center justify-center rounded-full hover:text-white transition"
+              className="hover:cursor-pointer border-0 flex bg-white text-gray-600 hover:bg-gray-100 items-center justify-center rounded-full hover:text-green-600 transition-all duration-200"
             >
               <Smile
-                className="h-8 w-8"
+                className="h-6 w-6"
                 onClick={() => setShowEmojiPicker(true)}
               />
             </Button>
@@ -294,13 +587,13 @@ function ChatForm(props: Props) {
               type="text"
               placeholder={
                 selectedFiles && selectedFiles.length > 0
-                  ? "Ajouter un message (facultatif)"
-                  : "Écrire un message"
+                  ? "Ajouter un message..."
+                  : "Message"
               }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onInput={handleInput} // Remplace 1 par l'ID réel de l'utilisateur
-              className="w-full h-10 border-0 focus-visible:border-0 focus:border-white placeholder:italic px-4 focus:outline-none"
+              onInput={handleInput}
+              className="w-full h-10 border-0 focus-visible:ring-0 focus:border-0 placeholder:text-gray-500 placeholder:text-sm px-3 focus:outline-none text-sm"
             />
           </div>
         ) : (
@@ -314,31 +607,33 @@ function ChatForm(props: Props) {
         {!message && !selectedFiles && !isVoiceRecorder ? (
           <Button
             asChild
-            type="button"
             size={"icon"}
             onClick={() => setIsVoiceRecorder((state) => !state)}
-            className="hover:cursor-pointer border-0 flex items-center justify-center bg-white text-gray-600 hover:bg-green-600 rounded-full hover:text-white transition"
+            className="hover:cursor-pointer border-0 flex bg-white text-gray-600 hover:bg-gray-100 items-center justify-center rounded-full hover:text-green-600 transition-all duration-200"
           >
-            <Mic className="h-8 w-8" />
+            <Mic className="h-6 w-6" />
           </Button>
         ) : (
           <Button
             type="submit"
             asChild
             size={"icon"}
-            onClick={handleSubmit}
-            className="hover:cursor-pointer border-0 p-1 w-10 h-10 flex items-center text-white bg-green-600 hover:bg-green-700 justify-center rounded-full transition"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
+            className="hover:cursor-pointer border-0 p-2 w-8 h-8 flex items-center justify-center bg-green-600 hover:bg-green-700 rounded-full transition-all duration-200"
           >
-            <SendHorizontal className="h-8 w-8" />
+            <SendHorizontal className="h-5 w-5 text-white" />
           </Button>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 text-center mt-1">
-        Glissez-déposez des fichiers ici ou cliquez sur l'icône pour ajouter
+      <p className="text-xs text-gray-400 text-center mt-1">
+        Glissez-déposez des fichiers ici
       </p>
       {showEmojiPicker && (
-        <div className="absolute bottom-full flex justify-center mb-2 left-0 z-50">
+        <div className="absolute bottom-full left-0 z-50">
           <EmojiPicker
             setMessage={setMessage}
             onClose={() => setShowEmojiPicker(false)}

@@ -76,7 +76,9 @@ export default class ChatService {
               attachments: {
                 select: {
                   id: true,
-                  mimetype:true
+                  mimetype:true,
+                  isVoice:true,
+                  duration:true
                 },
               },
               author: {

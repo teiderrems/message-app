@@ -104,7 +104,7 @@ function ChatItem(props: Props) {
 
   return (
     <div
-      onClick={() => navigate(`/chats/${chat.id}`)}
+      onClick={() => navigate(`/chats/${chat.id}`,{replace:true})}
       key={chat.id}
       className={`h-14 hover:border hover:bg-gray-200 text-black hover:border-gray-300 hover:cursor-pointer rounded-md flex px-1 py-3 items-center space-x-1 ${
         isActive ? "bg-gray-200" : ""

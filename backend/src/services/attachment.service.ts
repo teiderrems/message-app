@@ -3,7 +3,7 @@ import { Prisma, Attachment } from "@/generated/prisma";
 
 export default class AttachmentService {
 
-    static async createAttachment(messageId:number, data: Omit<Attachment, "id" | "createdAt" | "updatedAt"| "messageId">[]) {
+    static async createAttachment(messageId:number, data: Omit<Attachment, "id" | "createdAt" | "updatedAt"| "messageId" | "isVoice"| "duration"| "size">[]) {
         try {
             return await prisma.attachment.createMany({
                 data: data.map(item => ({

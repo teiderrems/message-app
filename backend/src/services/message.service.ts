@@ -12,13 +12,12 @@ export default class MessageService {
       "id" | "createdAt" | "updatedAt" | "messageId"
     >[];
   }) {
-
     try {
       if (attachments) {
         return await prisma.message.create({
           data: {
             content: message.content,
-            replyMessageId:message.replyMessageId,
+            replyMessageId: message.replyMessageId,
             author: {
               connect: {
                 id: message.authorId,
@@ -39,7 +38,9 @@ export default class MessageService {
             attachments: {
               select: {
                 id: true,
-                mimetype:true
+                mimetype: true,
+                isVoice: true,
+                duration: true,
               },
             },
             author: {
@@ -50,6 +51,7 @@ export default class MessageService {
                 Profil: {
                   select: {
                     id: true,
+                    mimetype: true,
                   },
                 },
               },
@@ -61,7 +63,7 @@ export default class MessageService {
       return await prisma.message.create({
         data: {
           content: message.content,
-          replyMessageId:message.replyMessageId,
+          replyMessageId: message.replyMessageId,
           author: {
             connect: {
               id: message.authorId,
@@ -77,7 +79,9 @@ export default class MessageService {
           attachments: {
             select: {
               id: true,
-              mimetype:true
+              mimetype: true,
+              isVoice: true,
+              duration: true,
             },
           },
           author: {
@@ -88,11 +92,11 @@ export default class MessageService {
               Profil: {
                 select: {
                   id: true,
-                  mimetype:true
+                  mimetype: true,
                 },
               },
             },
-          }
+          },
         },
       });
     } catch (error) {
@@ -147,7 +151,9 @@ export default class MessageService {
           attachments: {
             select: {
               id: true,
-              mimetype:true
+              mimetype: true,
+              isVoice: true,
+              duration: true,
             },
           },
           author: {
@@ -158,13 +164,13 @@ export default class MessageService {
               Profil: {
                 select: {
                   id: true,
-                  mimetype:true
+                  mimetype: true,
                 },
               },
             },
           },
           createdAt: true,
-        }
+        },
       });
     } catch (error) {
       console.error(error);
@@ -253,7 +259,7 @@ export default class MessageService {
 
   static async updateMessageIsViewed({
     id,
-    userId
+    userId,
   }: {
     id: number;
     userId: number;
@@ -261,10 +267,10 @@ export default class MessageService {
     try {
       const msg = await prisma.message.findUniqueOrThrow({
         where: { id },
-        select: { id: true, isViewed: true, authorId: true},
+        select: { id: true, isViewed: true, authorId: true },
       });
 
-      if (msg  && msg.isViewed === false && msg.authorId !== userId) {
+      if (msg && msg.isViewed === false && msg.authorId !== userId) {
         return (
           await prisma.message.update({
             where: { id },
@@ -273,7 +279,8 @@ export default class MessageService {
               id: true,
               isViewed: true,
             },
-          })).isViewed;
+          })
+        ).isViewed;
       }
       return false;
     } catch (error) {

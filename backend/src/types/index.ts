@@ -38,6 +38,8 @@ type MessageDetail = {
   attachments: {
     id: number;
     mimetype: string;
+    isVoice?: boolean | null;
+    duration?: number | null;
   }[];
   author: {
     id: number;

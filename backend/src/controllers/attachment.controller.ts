@@ -78,26 +78,27 @@ export default class AttachmentController {
 
     try {
       const attachment = await AttachmentService.getAttachmentById(+id);
-      if (attachment) {
-        // This appears to be a backend/Node.js/Express code correction request
-        // Here's the corrected version with proper async handling and error management
-
-        res.set({
-          "Content-Type": attachment.mimetype || "application/octet-stream",
-          "Content-Disposition": `inline; filename="${encodeURIComponent(
-            attachment.filename!
-          )}"`,
-          "Content-Length": attachment.data.length.toString(),
-          "Cache-Control": "public, max-age=31536000", // Optional: add caching
-        });
-        // Ensure the data is properly formatted (Buffer or string)
-        const data = Buffer.isBuffer(attachment.data)
-          ? attachment.data
-          : Buffer.from(attachment.data);
-
-        return res.status(200).send(data);
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
       }
-      return res.status(404).json({ error: "Attachment not found" });
+
+      // Set headers
+      res.set({
+        "Content-Type": attachment.mimetype || "application/octet-stream",
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(
+          attachment.filename!
+        )}`,
+        "Content-Length": attachment.data.length.toString(),
+        "Cache-Control": "public, max-age=31536000", // 1 year caching
+      });
+
+      // Ensure data is a Buffer
+      const buffer = Buffer.isBuffer(attachment.data)
+        ? attachment.data
+        : Buffer.from(attachment.data);
+
+      // Send the file
+      return res.status(200).send(buffer);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Failed to retrieve attachment" });
